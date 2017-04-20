@@ -6,33 +6,36 @@ import (
 	"io"
 	"strings"
 
+	"fmt"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
 type Expediente struct {
-	Codigo             string
-	Descripcion        string
-	Referencia         string
-	Tipo               string
-	Categorias         string
-	DescripcionAnuncio string
-	Notas              string
-	TipoContratacion   string
-	Entidad            string
-	FechaPublicacion   string
-	FechaUltima        string
-	PlazoParticipacion string
-	FechaInicio        string
-	Duracion           string
-	FechaConcl         string
-	UC                 string
-	NombreOperador     string
-	Email              string
-	Web                string
-	TablasA            []tablaA
-	TablaProc          tablaProc
-	TablaAnexo         tablaAnexo
-	URL                string
+	Codigo             string     `json:"codigo"`
+	Descripcion        string     `json:"descripcion"`
+	Referencia         string     `json:"referencia"`
+	Tipo               string     `json:"tipo"`
+	Categorias         string     `json:"categorias"`
+	DescripcionAnuncio string     `json:"descripcion_anuncio"`
+	Notas              string     `json:"notas"`
+	TipoContratacion   string     `json:"tipo_contratacion"`
+	Entidad            string     `json:"entidad"`
+	FechaPublicacion   string     `json:"fecha_publicacion"`
+	FechaUltima        string     `json:"fecha_ultima_actualizacion"`
+	PlazoParticipacion string     `json:"plazo_participacion"`
+	FechaInicio        string     `json:"fecha_inicio_contrato"`
+	Duracion           string     `json:"duracion_contrato"`
+	FechaConcl         string     `json:"fecha_conclusion"`
+	UC                 string     `json:"unidad_compradora"`
+	NombreOperador     string     `json:"nombre_operador"`
+	Email              string     `json:"email"`
+	Web                string     `json:"web"`
+	TablasA            []tablaA   `json:"tabla_a"`
+	TablaProc          tablaProc  `json:"tabla_proc"`
+	TablaAnexo         tablaAnexo `json:"tabla_anexo"`
+	URL                string     `json:"url"`
+	IDCompranet        int        `json:"id_compranet"`
 }
 
 type tablaA struct {
@@ -150,8 +153,11 @@ const expedienteTemplate = `{{define "expediente"}}
 	{{end}}
 	`
 
-func GetNewExpediente(rawqn *goquery.Selection) *Expediente {
-	answers := joinQA(rawqn)
+func GetNewExpediente(rawqn *goquery.Selection) (*Expediente, error) {
+	answers, err := joinQA(rawqn)
+	if err != nil {
+		return nil, fmt.Errorf("no data for ID")
+	}
 	exp := Expediente{
 		Codigo:             answers[Codigo].value,
 		Descripcion:        answers[Descripcion].value,
@@ -173,11 +179,15 @@ func GetNewExpediente(rawqn *goquery.Selection) *Expediente {
 		Email:              answers[Email].value,
 		Web:                answers[Web].value,
 	}
-	return &exp
+	return &exp, nil
 }
 
-func joinQA(s *goquery.Selection) map[string]answer {
+func joinQA(s *goquery.Selection) (map[string]answer, error) {
 	// qamap := make(map[string]string)
+	if s.Size() == 0 {
+		fmt.Println("EMPTY DATA")
+		return nil, fmt.Errorf("no data for that id")
+	}
 	qna := getNewQnA()
 	s.Each(func(i int, a *goquery.Selection) {
 		question := strings.TrimSpace(a.Find(".form_question").Text())
@@ -188,7 +198,7 @@ func joinQA(s *goquery.Selection) map[string]answer {
 		qna[question] = tempA
 
 	})
-	return qna
+	return qna, nil
 }
 
 func (e *Expediente) Print(writer io.Writer) {

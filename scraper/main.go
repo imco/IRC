@@ -8,22 +8,30 @@ import (
 
 	"fmt"
 
-	"io/ioutil"
-
 	"github.com/headzoo/surf/jar"
 	"gopkg.in/headzoo/surf.v1"
 )
 
-func getExpedienteData(id int, expURL string, browser *browser.Browser) error {
+func getExpedienteData(id int, expURL string, browser *browser.Browser) (*Expediente, error) {
 	if err := browser.Open(expURL); err != nil {
-		return fmt.Errorf("could not open %s, error: %v", expURL, err)
+		return nil, fmt.Errorf("could not open %s, error: %v", expURL, err)
 	}
 	qnaRaw := browser.Find("#cntDetail .form_container ul li")
-	exp := GetNewExpediente(qnaRaw)
+	exp, err := GetNewExpediente(qnaRaw)
+	if err != nil {
+		return nil, fmt.Errorf("no data for %d", id)
+	}
 	exp.URL = expURL
-	exp.Print(os.Stdout)
-	ioutil.WriteFile("output.json", exp.ToJson(), 0644)
-	return nil
+	exp.IDCompranet = id
+	return exp, nil
+}
+
+func openOutputFile(name string) *os.File {
+	file, err := os.OpenFile(name, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+	if err != nil {
+		log.Fatalf("could not open file: %v", err)
+	}
+	return file
 }
 
 func main() {
@@ -32,10 +40,27 @@ func main() {
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
-	expedienteURL := fmt.Sprintf("https://compranet.funcionpublica.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", 1)
-	if err := getExpedienteData(0, expedienteURL, browser); err != nil {
-		fmt.Println(err)
+
+	outputFile := openOutputFile("data.json")
+	defer outputFile.Close()
+
+	for idCompranet := -1; idCompranet < 20; idCompranet++ {
+		expedienteURL := fmt.Sprintf("https://compranet.funcionpublica.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", idCompranet)
+		// if err := getExpedienteData(idCompranet, expedienteURL, browser); err != nil {
+		// 	fmt.Println(err)
+		// }
+		exp, err := getExpedienteData(idCompranet, expedienteURL, browser)
+		if err != nil {
+			log.Printf("error: %v", err)
+		} else {
+			jstring := string(exp.ToJson())
+			outputFile.WriteString(jstring + "\n")
+		}
+
+		// ioutil.WriteFile("output.json", exp.ToJson(), 0644)
+
 	}
+
 	// fmt.Printf("EXPEDIENTE == %v", exp)
 	// var node []*html.Node
 
