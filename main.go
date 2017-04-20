@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	idFile, err := os.OpenFile("ids", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+	idFile, err := os.OpenFile("ids_todos_21665", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		panic(err)
 	}
@@ -39,7 +39,7 @@ func main() {
 	idRegexp, _ := regexp.Compile("([0-9]+)', ")
 	totalPaginasRegexp, _ := regexp.Compile("([0-9]+)")
 	totalCountRaw := strings.TrimSpace(bow.Find("div#allButtons_nav1").Text())
-	log.SetOutput(os.Stdout)
+	log.SetOutput(os.Stdout) //Redirije la salida de los logs al stdout
 	// fmt.Println(totalPaginasRegexp.MatchString(totalPaginas))
 	// fmt.Println(totalPaginasRegexp.FindAllString(totalPaginas, -1))
 	totalCount, err := strconv.Atoi(totalPaginasRegexp.FindAllString(totalCountRaw, -1)[0])
@@ -48,7 +48,11 @@ func main() {
 	}
 	fmt.Printf("TOTAL DOCS: %d\n", totalCount)
 
-	for currentPage := 1; currentPage < 53558; currentPage++ {
+	// 53558 <- TOTAL DE COSAS
+	//  21665 <- Ultimo obtenido en impares
+	// for currentPage := 20561; currentPage < 53558; currentPage++ { ULTIMA ITERACION DEL LUNES EN IMPAREs
+
+	for currentPage := 21665; currentPage < 53559; currentPage++ {
 		log.Printf("PAGINA %d", currentPage)
 
 		bow.Dom().Find("td.col__fixed_ a").Each(func(i int, s *goquery.Selection) {
@@ -64,14 +68,14 @@ func main() {
 		if err != nil {
 			log.Fatalf("could not find the form: %v", err)
 		}
-		currentPage++
 
 		frm.Input("listManager.pagerComponent.page", strconv.Itoa(currentPage))
 		sleepTimer := randomTimer()
 		log.Printf("durmiendo por: %d segundos", sleepTimer)
 		time.Sleep(time.Duration(sleepTimer) * time.Second)
 		if frm.Submit() != nil {
-			panic(err)
+			log.Printf("error en la forma: %v", err)
+
 		}
 
 	}
