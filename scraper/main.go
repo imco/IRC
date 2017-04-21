@@ -44,17 +44,27 @@ func main() {
 	outputFile := openOutputFile("data.json")
 	defer outputFile.Close()
 
-	for idCompranet := -1; idCompranet < 20; idCompranet++ {
-		expedienteURL := fmt.Sprintf("https://compranet.funcionpublica.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", idCompranet)
+	rawHTMLFolder := "htmls"
+	os.Mkdir(rawHTMLFolder, 0777)
+
+	for idCompranet := 0; idCompranet < 1; idCompranet++ {
+		expedienteURL := fmt.Sprintf("https://compranet.funcionpublica.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", 900585)
 		// if err := getExpedienteData(idCompranet, expedienteURL, browser); err != nil {
 		// 	fmt.Println(err)
 		// }
-		exp, err := getExpedienteData(idCompranet, expedienteURL, browser)
+		exp, err := getExpedienteData(900585, expedienteURL, browser)
 		if err != nil {
 			log.Printf("error: %v", err)
 		} else {
+			// exp.Print(os.Stdout)
+			tables := browser.Find("table")
+			exp.AddTables(tables)
 			jstring := string(exp.ToJson())
 			outputFile.WriteString(jstring + "\n")
+			err := exp.SaveRawHTML(browser, rawHTMLFolder)
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		// ioutil.WriteFile("output.json", exp.ToJson(), 0644)
