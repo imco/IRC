@@ -41,6 +41,7 @@ type Expediente struct {
 	TablaAnexo         tablaAnexo `json:"tabla_anexos"`
 	URL                string     `json:"url"`
 	IDCompranet        int        `json:"id_compranet"`
+	FechaScrap         int64      `json:"timestamp"`
 }
 
 type tablaA struct {
@@ -298,7 +299,7 @@ func (e *Expediente) ToJson() []byte {
 
 func (e *Expediente) SaveRawHTML(browser *browser.Browser, dir string) error {
 	html := browser.Body()
-	e.Print(os.Stdout)
+	// e.Print(os.Stdout)
 	id := strconv.Itoa(e.IDCompranet)
 	file, err := os.OpenFile(dir+"/"+id+".html", os.O_CREATE|os.O_WRONLY, 0644)
 	defer file.Close()

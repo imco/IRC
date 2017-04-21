@@ -8,6 +8,9 @@ import (
 
 	"fmt"
 
+	"time"
+
+	"github.com/headzoo/surf/agent"
 	"github.com/headzoo/surf/jar"
 	"gopkg.in/headzoo/surf.v1"
 )
@@ -34,66 +37,51 @@ func openOutputFile(name string) *os.File {
 	return file
 }
 
-func main() {
-
-	browser, err := getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
-	if err != nil {
-		log.Fatalln(err.Error())
+func startScrapping(startExp, endExp int, outFile *os.File, htmlDir string, browser *browser.Browser) error {
+	if endExp < startExp {
+		return fmt.Errorf("el valor de inicio debe ser menor al del final")
 	}
 
+	for idCompranet := startExp; idCompranet < endExp; idCompranet++ {
+		expedienteURL := fmt.Sprintf("https://compranet.funcionpublica.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", idCompranet)
+		exp, err := getExpedienteData(idCompranet, expedienteURL, browser)
+		if err != nil {
+			log.Printf("error: %v", err) //No se obtuvieron datos
+		} else {
+			tables := browser.Find("table")
+			exp.AddTables(tables)
+			exp.FechaScrap = time.Now().Unix()
+			jstring := string(exp.ToJson())
+			outFile.WriteString(jstring + "\n")
+			err := exp.SaveRawHTML(browser, htmlDir)
+			if err != nil {
+				log.Printf("no puedo escribir el archivo HTML: %v", err)
+			}
+		}
+
+		// browser, _ = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
+		// if err != nil {
+		// 	log.Fatalf("no puedo abrir la pagina: %v", err)
+		// }
+
+	}
+
+	return nil
+}
+
+func main() {
 	outputFile := openOutputFile("data.json")
 	defer outputFile.Close()
 
 	rawHTMLFolder := "htmls"
 	os.Mkdir(rawHTMLFolder, 0777)
 
-	for idCompranet := 0; idCompranet < 1; idCompranet++ {
-		expedienteURL := fmt.Sprintf("https://compranet.funcionpublica.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", 900585)
-		// if err := getExpedienteData(idCompranet, expedienteURL, browser); err != nil {
-		// 	fmt.Println(err)
-		// }
-		exp, err := getExpedienteData(900585, expedienteURL, browser)
-		if err != nil {
-			log.Printf("error: %v", err)
-		} else {
-			// exp.Print(os.Stdout)
-			tables := browser.Find("table")
-			exp.AddTables(tables)
-			jstring := string(exp.ToJson())
-			outputFile.WriteString(jstring + "\n")
-			err := exp.SaveRawHTML(browser, rawHTMLFolder)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		// ioutil.WriteFile("output.json", exp.ToJson(), 0644)
-
+	browser, err := getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
+	if err != nil {
+		log.Fatalf("no puedo abrir la pagina: %v", err)
 	}
 
-	// fmt.Printf("EXPEDIENTE == %v", exp)
-	// var node []*html.Node
-
-	// browser.
-	// fmt.Println("--------------------------")
-	// // fmt.Println(browser.Find("table").Length())
-	// browser.Find("table").Each(func(i int, t *goquery.Selection) {
-	// 	fmt.Printf("TABLA: %d\n", i)
-	// 	section := 0
-	// 	t.Find("tr").Each(func(j int, tr *goquery.Selection) {
-	// 		section++
-	// 		if tr.Children().First().Is("th") && tr.Children().Length() == 1 {
-	// 			fmt.Println(tr.Text())
-	// 		}
-	// 	})
-	// })
-	// browser.Find("table tbody tr td").Each(func(i int, s *goquery.Selection) {
-	// 	fmt.Printf("%d -----> %s\n", i, strings.TrimSpace(s.Text()))
-
-	// })
-	// //Save the full HTML body
-	// fmt.Println(browser.Body())
-	// fmt.Println(browser.Url())
+	startScrapping(1, 5, outputFile, rawHTMLFolder, browser)
 
 }
 
@@ -112,6 +100,6 @@ func getNewBrowserWithSession(url string) (bow *browser.Browser, err error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("page title: %s", bow.Title())
+	bow.SetUserAgent(agent.Firefox())
 	return bow, nil
 }
