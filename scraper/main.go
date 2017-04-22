@@ -64,16 +64,18 @@ func startScrapping(startExp, endExp int, htmlDir string, browser *browser.Brows
 				log.Printf("no puedo escribir el archivo HTML: %v", err)
 			}
 			writeLastToLog(logFile, idCompranet)
-			time.Sleep(3 * time.Second)
+			time.Sleep(2 * time.Second)
 			log.Printf("ended exp: %d", idCompranet)
 		}
 
-		if idCompranet%2 == 0 {
+		// reiniciar browser despues de 100 requests
+		if idCompranet%100 == 0 {
+			log.Println("getting new session")
 			browser, err = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
 			if err != nil {
 				return idCompranet, fmt.Errorf("no puedo abrir la pagina: %v", err)
 			}
-			log.Println("getting new session")
+
 		}
 
 		// browser, _ = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
