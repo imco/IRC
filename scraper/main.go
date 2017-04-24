@@ -75,29 +75,30 @@ func startScrapping(startExp, endExp int, htmlDir string, browser *browser.Brows
 			}
 			log.Printf("error: %v", err) //No se obtuvieron datos
 			// return idCompranet, err
-		}
-		// toca obtener las tablas y datos faltantes
-		tables := browser.Find("table")
-		exp.AddTables(tables)
-		exp.FechaScrap = time.Now().Unix() //timestamp para saber el momento exacto de extracción
-		jstring := string(exp.ToJson())    //construye el JSON que se va a guardar en el outFile
-		outFile.WriteString(jstring + "\n")
-		err = exp.SaveRawHTML(browser, htmlDir) //almacenamos el HTML sin procesar
-		if err != nil {
-			log.Printf("no puedo escribir el archivo HTML: %v", err)
-		}
-		writeLastToLog(logFile, idCompranet) //y llevamos registro de lo último que se pudo guardar
-		time.Sleep(2 * time.Second)          //TODO: encontrar intervalo
-		log.Printf("ended exp: %d", idCompranet)
-
-		// reiniciar browser despues de 100 requests
-		if idCompranet%100 == 0 {
-			log.Println("getting new session")
-			browser, err = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
+		} else {
+			// toca obtener las tablas y datos faltantes
+			tables := browser.Find("table")
+			exp.AddTables(tables)
+			exp.FechaScrap = time.Now().Unix() //timestamp para saber el momento exacto de extracción
+			jstring := string(exp.ToJson())    //construye el JSON que se va a guardar en el outFile
+			outFile.WriteString(jstring + "\n")
+			err = exp.SaveRawHTML(browser, htmlDir) //almacenamos el HTML sin procesar
 			if err != nil {
-				return idCompranet, fmt.Errorf("no puedo abrir la pagina: %v", err)
+				log.Printf("no puedo escribir el archivo HTML: %v", err)
 			}
+			writeLastToLog(logFile, idCompranet) //y llevamos registro de lo último que se pudo guardar
+			time.Sleep(2 * time.Second)          //TODO: encontrar intervalo
+			log.Printf("ended exp: %d", idCompranet)
 
+			// reiniciar browser despues de 100 requests
+			if idCompranet%100 == 0 {
+				log.Println("getting new session")
+				browser, err = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
+				if err != nil {
+					return idCompranet, fmt.Errorf("no puedo abrir la pagina: %v", err)
+				}
+
+			}
 		}
 
 	}
