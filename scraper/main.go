@@ -148,8 +148,8 @@ func main() {
 	for {
 		lastRead, err = startScrapping(startVal, endVal, rawHTMLFolder, browser, outputFile, logFile)
 		if err != nil {
-			log.Printf("could not continue scraping, %v, sleeping for 60 seconds", err)
-			time.Sleep(10 * time.Second)
+			log.Printf("could not continue scraping, %v, sleeping for 120 seconds", err)
+			time.Sleep(120 * time.Second)
 			browser, _ = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
 			log.Printf("restarting from %d", lastRead)
 			startVal = lastRead
