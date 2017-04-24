@@ -44,6 +44,7 @@ func getExpedienteData(id int, expURL string, browser *browser.Browser) (*Expedi
 	if err != nil {
 		return nil, fmt.Errorf("no data for %d", id)
 	}
+	//Asignar al exp la url actual
 	exp.URL = expURL
 	exp.IDCompranet = id
 	return exp, nil
@@ -137,9 +138,10 @@ func main() {
 	}
 	lastRead := startVal
 
+	//Loop infinito de scrapeo
 	for {
 		lastRead, err = startScrapping(startVal, endVal, rawHTMLFolder, browser, outputFile, logFile)
-		if err != nil {
+		if err != nil { //En caso de error, dormir 120 segundos y reintentar
 			log.Printf("could not continue scraping, %v, sleeping for 120 seconds", err)
 			time.Sleep(120 * time.Second)
 			browser, _ = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")

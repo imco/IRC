@@ -16,6 +16,7 @@ import (
 	"github.com/headzoo/surf/browser"
 )
 
+// Expediente representa los datos de una página interna de Compranet
 type Expediente struct {
 	Codigo             string     `json:"codigo"`
 	Descripcion        string     `json:"descripcion"`
@@ -44,6 +45,7 @@ type Expediente struct {
 	FechaScrap         int64      `json:"timestamp"`
 }
 
+//TablaA representa las primeras tablas de procedimientos y detalles del expediente
 type tablaA struct {
 	Rows []rowTablaA `json:"rows"`
 }
@@ -52,6 +54,7 @@ type tablaProc struct {
 	Rows []rowTablaProc `json:"rows"`
 }
 
+// TablaAnexo representa los archivos adjuntos extra que se encuentren en la Tabla de Anexos
 type tablaAnexo struct {
 	Rows []rowTablaAnexo `json:"rows"`
 }
@@ -65,6 +68,7 @@ type rowTablaAnexo struct {
 	FechaMod           string `json:"fecha_modificacion"`
 }
 
+// ids para identificar campos de la tabla de anexos
 const (
 	tablaAnexoFila = iota
 	tablaAnexoArchivo
@@ -108,6 +112,7 @@ type answer struct {
 	value    string
 }
 
+// constantes con la de descripción de los campos que no son tablas
 const (
 	Codigo             = "Código del Expediente"
 	Descripcion        = "Descripción del Expediente"
@@ -132,6 +137,7 @@ const (
 
 type QuestionAndAnswer map[string]answer
 
+// template para imprimir un expediente en stdout
 const expedienteTemplate = `{{define "expediente"}}
 	Codigo: 		{{.Codigo}}
 	Descripcion:  		{{.Descripcion}}
@@ -159,6 +165,9 @@ const expedienteTemplate = `{{define "expediente"}}
 	{{end}}
 	`
 
+// GetNewExpediente genera un nuevo expediente a partir de un DOM.
+//Inicialmente se genera un diccionario con el campo correspondiente, asociado
+//al valor del struct del Expediente. Posteriormente se asigna al nuevo expediente
 func GetNewExpediente(rawqn *goquery.Selection) (*Expediente, error) {
 	answers, err := joinQA(rawqn)
 	if err != nil {
@@ -188,6 +197,9 @@ func GetNewExpediente(rawqn *goquery.Selection) (*Expediente, error) {
 	return &exp, nil
 }
 
+// joinQA busca en la estructura del DOM la clase de CSS donde se encuentran las respuestas
+//Al encontrarlas, las asigna aun mapa en donde podemos tener la relación entre
+//un campo y la estructura interna de Expedientes
 func joinQA(s *goquery.Selection) (map[string]answer, error) {
 	// qamap := make(map[string]string)
 	if s.Size() == 0 {
@@ -207,6 +219,8 @@ func joinQA(s *goquery.Selection) (map[string]answer, error) {
 	return qna, nil
 }
 
+// AddTables es un método gigante que busca las tablas dentro del DOM
+//y las asigna al expediente.
 func (e *Expediente) AddTables(tables *goquery.Selection) {
 	// fmt.Println(tables.Size())
 	// var tabla1 *goquery.Selection
@@ -287,16 +301,19 @@ func (e *Expediente) AddTables(tables *goquery.Selection) {
 	})
 }
 
+// Print regresa la representación grafica de un Expediente
 func (e *Expediente) Print(writer io.Writer) {
 	report := template.Must(template.New("expediente").Parse(expedienteTemplate))
 	report.Execute(writer, e)
 }
 
+// ToJson obtiene la representación en formato JSOO de la Exp
 func (e *Expediente) ToJson() []byte {
 	jsonExp, _ := json.Marshal(e)
 	return jsonExp
 }
 
+// SaveRawHTML almacena en un nuevo archivo el HTML tal cual viene de la página
 func (e *Expediente) SaveRawHTML(browser *browser.Browser, dir string) error {
 	html := browser.Body()
 	// e.Print(os.Stdout)
