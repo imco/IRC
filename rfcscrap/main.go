@@ -18,6 +18,8 @@ import (
 
 	"net/http"
 
+	"crypto/tls"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/headzoo/surf/agent"
 	"github.com/headzoo/surf/jar"
@@ -176,11 +178,6 @@ func main() {
 		fmt.Println()
 	}
 
-	// html, _ := getHtmlFromXml(doc, "//update[@id='formTabla:tabla']")
-	// // fmt.Println(html)
-	// html.Find("#formTabla\\:tabla_data").Each(func(i int, t *goquery.Selection) {
-	// 	fmt.Println(t.Text())
-	// })
 	urlValues = getDefaultHeaderVals(sourceBtn, renderDialog)
 	urlValues.Set(atenderHeader, atenderHeader)
 	urlValues.Set(formTabla, formTabla)
@@ -188,9 +185,7 @@ func main() {
 	defer doc.Free()
 
 	html, _ := getHtmlFromXml(doc, "//update[@id='formTabla:rupcDialogId']")
-	// html.Find("#formTabla//:detalleEmpresa").Each(func(i int, t *goquery.Selection) {
-	// 	fmt.Println(t.Html())
-	// })
+
 	fmt.Println(html.Html())
 }
 
@@ -202,7 +197,12 @@ func writeLastToLog(file *os.File, last int) {
 // getNewBrowserWithSession returns a new surf Browser object, a new cookie jar and
 // Firefox as the default userAgent
 func getNewBrowserWithSession(url string) (bow *browser.Browser, err error) {
+
 	bow = surf.NewBrowser()
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	bow.SetTransport(tr)
 	bow.SetCookieJar(jar.NewMemoryCookies())
 	err = bow.Open(url)
 	if err != nil {
