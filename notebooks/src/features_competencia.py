@@ -27,7 +27,8 @@ def contratos_por_proveedor(df):
     df_feature = df_feature.assign(
         contratos_por_proveedor=df_feature.conteo_contratos.divide(df_feature.proveedores_distintos)
     )
-    return df_feature.loc[:, ['CLAVEUC', 'contratos_por_proveedor']]
+    # df_feature = df_feature.loc[:, ['CLAVEUC', 'contratos_por_proveedor']]
+    return df_feature
 
 
 def porcentaje_procedimientos_por_tipo(df):
@@ -107,7 +108,10 @@ def importe_promedio_por_contrato(df):
     df_feature = df_feature.assign(
         monto_contrato_promedio=df_feature.IMPORTE_PESOS.divide(df_feature.conteo_contratos)
     )
-    return df_feature.loc[:, ['CLAVEUC', 'monto_contrato_promedio']]
+    df_feature = df_feature.drop('conteo_contratos', axis=1)
+    df_feature = df_feature.rename(columns={'IMPORTE_PESOS': 'monto_total'})
+    # df_feature = df_feature.loc[:, ['CLAVEUC', 'monto_contrato_promedio']]
+    return df_feature
 
 
 def calcular_IHH(df):
