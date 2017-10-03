@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # Created by Raul Peralta-Lozada (29/09/17)
+import re
+import unicodedata
 import pandas as pd
 
 endings_regex_list = [
@@ -23,6 +25,10 @@ endings_regex_list = [
     # SC DE C DE RL DE CV
     '[S]\s?[C]\s+[D]\s?[E]\s+[C]\s+[D]\s?[E]\s+[R]\s?[L]\s+[D]\s?[E]\s+[C]\s?[V]',
 ]
+
+
+def find_numbers(string):
+    return re.findall('[-+]?\d+[\.]?\d*', string)
 
 
 def remove_pattern(string, pattern):
@@ -67,9 +73,80 @@ def clean_procedimientos_file(name):
     df.loc[:, 'PROVEEDOR_CONTRATISTA'] = df.PROVEEDOR_CONTRATISTA.str.replace('"', '')
     df.loc[:, 'PROVEEDOR_CONTRATISTA'] = df.PROVEEDOR_CONTRATISTA.str.replace("'", '')
     df.loc[:, 'PROVEEDOR_CONTRATISTA'] = df.PROVEEDOR_CONTRATISTA.map(remove_double_white_space)
+    for regex in endings_regex_list:
+        pattern = re.compile(regex)
+        df = df.assign(
+                PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.map(
+                    lambda string: remove_pattern(string, pattern)
+                )
+        )
+    df = df.assign(PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.str.strip())
     # All upper case
     df.loc[:, 'NUMERO_PROCEDIMIENTO'] = df.NUMERO_PROCEDIMIENTO.str.upper()
     return df
+
+
+def clean_participantes_file(path: str):
+    df = pd.read_csv(path, encoding='iso-8859-1', dtype={'Expediente': str})
+    # Add the period according to the file name
+    periodo = path.split('.csv')[0]
+    periodo = '-'.join(find_numbers(periodo))
+    df = df.assign(periodo=periodo)
+    # Normalize column names
+    df = df.rename(
+        columns={
+            'Dependencia/Entidad': 'DEPENDENCIA',
+            'Nº de Procedimiento': 'NUMERO_PROCEDIMIENTO',
+            'Unidad Compradora': 'NOMBRE_DE_LA_UC',
+            'Forma del procedimiento': 'FORMA_PROCEDIMIENTO',
+            'Nombre de Licitante': 'PROVEEDOR_CONTRATISTA',
+            'Expediente': 'CODIGO_EXPEDIENTE'
+        }
+    )
+    new_columns = {
+        col: unicodedata.normalize('NFD', col).encode('ascii', 'ignore').decode('utf-8')
+        for col in df.columns
+    }
+    new_columns = {
+        k: '_'.join(v.split(' ')).upper()
+        for k, v in new_columns.items()
+    }
+    df = df.rename(columns=new_columns)
+
+    # Normalize string column values
+    cols = {k for k, v in df.dtypes.to_dict().items() if str(v) == 'object'}
+    for col in cols:
+        df.loc[:, col] = df[col].str.normalize('NFD').str.encode('ascii', 'ignore').str.decode(
+            'utf-8').str.upper()
+        df.loc[:, col] = df[col].str.replace('.', '')
+        df.loc[:, col] = df[col].str.replace(',', '')
+        df.loc[:, col] = df[col].str.strip()
+
+    # Extract clave from UC's names
+    CLAVEUC = df.NOMBRE_DE_LA_UC.map(get_claveuc_nombre)
+    df = df.assign(CLAVEUC=CLAVEUC)
+    # Save as category to reduce memory usage
+    cols = (
+        'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'FORMA_PROCEDIMIENTO', 'PERIODO',
+        'ESTATUS_PARTIDA', 'ESTATUS_FALLO', 'ESTATUS_DE_PROPUESTA', 'DEPENDENCIA',
+        'CLAVEUC', 'PERIODO'
+    )
+    for col in cols:
+        df.loc[:, col] = df[col].astype('category')
+
+    # Remove common endings
+    for regex in endings_regex_list:
+        pattern = re.compile(regex)
+        df = df.assign(
+            PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.map(
+                lambda string: remove_pattern(string, pattern))
+        )
+    df = df.assign(PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.str.strip())
+    return df
+
+
+def write_file(df, file_name: str, sep='|', file_format='.psv'):
+    df.to_csv(file_name + file_format, index=False, quoting=1, encoding='utf-8', sep=sep)
 
 
 def convert_to_mxn(converter, montos, monedas, fechas):
