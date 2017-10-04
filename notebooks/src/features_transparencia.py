@@ -27,3 +27,23 @@ def porcentaje_procedimientos_presenciales(df):
         columns={'PRESENCIAL': 'pc_procedimientos_presenciales'}
     )
     return conteo_formas.loc[:, ['CLAVEUC', 'pc_procedimientos_presenciales']]
+
+
+def contratos_promedio_por_procedimimento(df):
+    """Agrupación de contratos en un mismo procedimiento"""
+    monto_por_contrato = df.groupby(
+        ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
+         'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
+        as_index=False
+    ).IMPORTE_PESOS.sum()
+    contratos_por_proc = monto_por_contrato.groupby(
+        ['CLAVEUC', 'NUMERO_PROCEDIMIENTO']).CODIGO_CONTRATO.nunique()
+    contratos_por_proc = contratos_por_proc.reset_index()
+
+    contratos_por_proc = contratos_por_proc.groupby(
+        'CLAVEUC', as_index=False
+    ).CODIGO_CONTRATO.mean()
+    contratos_por_proc = contratos_por_proc.rename(
+        columns={'CODIGO_CONTRATO': 'contratos_promedio_por_proc'}
+    )
+    return contratos_por_proc

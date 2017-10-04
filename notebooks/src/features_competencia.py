@@ -114,7 +114,38 @@ def importe_promedio_por_contrato(df):
     return df_feature
 
 
-def calcular_IHH(df):
+def calcular_IHH_contratos(df):
+    monto_por_contrato = df.groupby(
+        ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
+         'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
+        as_index=False
+    ).IMPORTE_PESOS.sum()
+    contratos_uc_poc = monto_por_contrato.groupby(
+        ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'NUMERO_PROCEDIMIENTO'],
+    ).CODIGO_CONTRATO.nunique()
+    contratos_uc_poc = contratos_uc_poc.reset_index()
+    contratos_uc_poc = contratos_uc_poc.groupby(
+        ['CLAVEUC', 'PROVEEDOR_CONTRATISTA'], as_index=False
+    ).CODIGO_CONTRATO.sum()
+    # se tiene el conte de contratos por UC y empresa
+    ###########
+    contratos_uc = contratos_uc_poc.groupby(
+        'CLAVEUC', as_index=False
+    ).CODIGO_CONTRATO.sum()
+    contratos_uc = contratos_uc.rename(columns={'CODIGO_CONTRATO': 'contratos_por_uc'})
+    contratos_uc_poc = pd.merge(contratos_uc_poc, contratos_uc, how='left', on='CLAVEUC')
+    contratos_uc_poc = contratos_uc_poc.assign(
+        Share=(contratos_uc_poc.CODIGO_CONTRATO.divide(contratos_uc_poc.contratos_por_uc) * 100)
+    )
+    contratos_uc_poc = contratos_uc_poc.assign(
+        IHH_contratos=contratos_uc_poc.Share**2
+    )
+    contratos_uc_poc = contratos_uc_poc.groupby(
+        'CLAVEUC', as_index=False).IHH_contratos.sum()
+    return contratos_uc_poc
+
+
+def calcular_IHH_monto(df):
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
@@ -132,8 +163,8 @@ def calcular_IHH(df):
         Share=(monto_uc_poc.IMPORTE_PESOS.divide(monto_uc_poc.monto_por_uc) * 100)
     )
     monto_uc_poc = monto_uc_poc.assign(
-        IHH=monto_uc_poc.Share**2
+        IHH_monto=monto_uc_poc.Share**2
     )
     monto_uc_poc = monto_uc_poc.groupby(
-        'CLAVEUC', as_index=False).IHH.sum()
+        'CLAVEUC', as_index=False).IHH_monto.sum()
     return monto_uc_poc
