@@ -12,9 +12,13 @@ Dentro del repositorio se encuentran tres apartados:
 Por un lado, los apartados uno y dos se componen completamente de código almacenado en la plataforma GitHub. Esta plataforma permite descargar o clonar todo el código en tu computadora, subir o crear nuevos archivos, proponer mejoras o correcciones al proceso, entre otros. Por otro lado, el conjunto de datos procesados se conservan en un servicio de almacenamiento en la nube provisto por Amazon.
 
 Actualmente, un repositorio abierto es la mejor herramienta para publicar los resultados de un proyecto de esta índole debido a los siguientes beneficios:
+
 **Replicabilidad**: Cualquier persona tienen acceso a todos los documentos que fueron utilizados para el proyecto, esto asegura máxima transparencia en la obtención de resultados
+
 **Cooperación**: Github es una comunidad de programadores, en donde más de 20 millones de usuarios participan activamente ayudándose unos a otros. De esta forma, el código está expuesto a ser mejorado por cualquier persona de la comunidad, fomentando la colaboración y la transmisión de conocimiento entre usuarios
+
 **Fácil Acceso**: Toda persona en cualquier parte del mundo puede acceder a los archivos en el repositorio. Por lo tanto, podrá ser empleado para fines de investigación por todos aquellos interesados en analizar el proceso de contrataciones públicas en México
+
 **Disponibilidad**: La información está disponible en cualquier momento y en cualquier lugar, sin riesgo a que exista pérdida de información y que ya no pueda ser recuperada
 
 Esta serie de beneficios permite expandir el alcance del proyecto a prácticamente todo el mundo, lo cual genera beneficios en materia de rendición de cuentas y transparencia en los procesos de contrataciones públicas en México. Asimismo, es un primer paso para impulsar el análisis continuo de estos procesos, elemento esencial para mitigar los riesgos de corrupción en el uso del presupuesto público.
