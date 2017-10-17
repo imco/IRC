@@ -4,21 +4,6 @@
 import pandas as pd
 
 
-def monto_por_unidad_compradora(df):
-    """Calcula el monto de la unidad compradora"""
-    monto_por_contrato = df.groupby(
-        ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
-         'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
-        as_index=False
-    ).IMPORTE_PESOS.sum()
-    monto_por_uc = monto_por_contrato.groupby(
-        'CLAVEUC', as_index=False).IMPORTE_PESOS.sum()
-    monto_por_uc = monto_por_uc.rename(
-        columns={'IMPORTE_PESOS': 'monto_total'}
-    )
-    return monto_por_uc
-
-
 def contratos_por_proveedor(df):
     """Por cada unidad compradora calcula el número de contratos por
     por proveedor diferente
@@ -28,21 +13,28 @@ def contratos_por_proveedor(df):
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
         as_index=False
     ).IMPORTE_PESOS.sum()
-    # ----------
+    # Proveedores distintos
     pocs_distintos = monto_por_contrato.groupby('CLAVEUC').PROVEEDOR_CONTRATISTA.nunique()
     pocs_distintos = pocs_distintos.reset_index()
     pocs_distintos = pocs_distintos.rename(
       columns={'PROVEEDOR_CONTRATISTA': 'proveedores_distintos'})
+    # procedimientos distintos
+    procedimientos_distintos = monto_por_contrato.groupby('CLAVEUC').NUMERO_PROCEDIMIENTO.nunique()
+    procedimientos_distintos = procedimientos_distintos.reset_index()
+    procedimientos_distintos = procedimientos_distintos.rename(
+      columns={'NUMERO_PROCEDIMIENTO': 'conteo_procedimientos'})
+    # Numero de contratos
     contratos_total = monto_por_contrato.groupby(
         ['CLAVEUC', 'NUMERO_PROCEDIMIENTO']).CODIGO_CONTRATO.nunique()
     contratos_total = contratos_total.reset_index()
     contratos_total = contratos_total.rename(columns={'CODIGO_CONTRATO': 'conteo_contratos'})
     contratos_total = contratos_total.groupby('CLAVEUC', as_index=False).conteo_contratos.sum()
     df_feature = pd.merge(pocs_distintos, contratos_total, on='CLAVEUC', how='inner')
+    df_feature = pd.merge(df_feature, procedimientos_distintos, on='CLAVEUC', how='inner')
     df_feature = df_feature.assign(
         contratos_por_proveedor=df_feature.conteo_contratos.divide(df_feature.proveedores_distintos)
     )
-    # df_feature = df_feature.loc[:, ['CLAVEUC', 'contratos_por_proveedor']]
+    df_feature = df_feature.loc[:, ['CLAVEUC', 'contratos_por_proveedor']]
     return df_feature
 
 
@@ -63,7 +55,6 @@ def porcentaje_procedimientos_por_tipo(df):
     total_procedimientos = conteo_tipos.sum(axis=1)
     conteo_tipos = conteo_tipos * 100
     conteo_tipos = conteo_tipos.divide(total_procedimientos, axis='index')
-    # TODO: cambiar el nombre de las columnas
     conteo_tipos = conteo_tipos.rename(
         columns={
             col: 'pc_procedimientos_' + col.replace(' ', '_').lower()
