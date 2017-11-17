@@ -2,9 +2,13 @@
 
 # Created by Raul Peralta-Lozada (28/09/17)
 import pandas as pd
+import numpy as np
+import networkx as nx
+from networkx.algorithms import bipartite
+from sklearn.linear_model import Ridge
 
 
-def contratos_por_proveedor(df):
+def contratos_por_proveedor(df, **kwargs):
     """Por cada unidad compradora calcula el número de contratos por
     por proveedor diferente
     """
@@ -14,12 +18,14 @@ def contratos_por_proveedor(df):
         as_index=False
     ).IMPORTE_PESOS.sum()
     # Proveedores distintos
-    pocs_distintos = monto_por_contrato.groupby('CLAVEUC').PROVEEDOR_CONTRATISTA.nunique()
+    pocs_distintos = monto_por_contrato.groupby(
+        'CLAVEUC').PROVEEDOR_CONTRATISTA.nunique()
     pocs_distintos = pocs_distintos.reset_index()
     pocs_distintos = pocs_distintos.rename(
       columns={'PROVEEDOR_CONTRATISTA': 'proveedores_distintos'})
     # procedimientos distintos
-    procedimientos_distintos = monto_por_contrato.groupby('CLAVEUC').NUMERO_PROCEDIMIENTO.nunique()
+    procedimientos_distintos = monto_por_contrato.groupby(
+        'CLAVEUC').NUMERO_PROCEDIMIENTO.nunique()
     procedimientos_distintos = procedimientos_distintos.reset_index()
     procedimientos_distintos = procedimientos_distintos.rename(
       columns={'NUMERO_PROCEDIMIENTO': 'conteo_procedimientos'})
@@ -27,10 +33,14 @@ def contratos_por_proveedor(df):
     contratos_total = monto_por_contrato.groupby(
         ['CLAVEUC', 'NUMERO_PROCEDIMIENTO']).CODIGO_CONTRATO.nunique()
     contratos_total = contratos_total.reset_index()
-    contratos_total = contratos_total.rename(columns={'CODIGO_CONTRATO': 'conteo_contratos'})
-    contratos_total = contratos_total.groupby('CLAVEUC', as_index=False).conteo_contratos.sum()
-    df_feature = pd.merge(pocs_distintos, contratos_total, on='CLAVEUC', how='inner')
-    df_feature = pd.merge(df_feature, procedimientos_distintos, on='CLAVEUC', how='inner')
+    contratos_total = contratos_total.rename(
+        columns={'CODIGO_CONTRATO': 'conteo_contratos'})
+    contratos_total = contratos_total.groupby(
+        'CLAVEUC', as_index=False).conteo_contratos.sum()
+    df_feature = pd.merge(
+        pocs_distintos, contratos_total, on='CLAVEUC', how='inner')
+    df_feature = pd.merge(
+        df_feature, procedimientos_distintos, on='CLAVEUC', how='inner')
     df_feature = df_feature.assign(
         contratos_por_proveedor=df_feature.conteo_contratos.divide(df_feature.proveedores_distintos)
     )
@@ -38,11 +48,12 @@ def contratos_por_proveedor(df):
     return df_feature
 
 
-def porcentaje_procedimientos_por_tipo(df):
-    """Por cada unidad compradora calcula el porcentaje de procedimientos por tipo"""
+def porcentaje_procedimientos_por_tipo(df, **kwargs):
+    """Por cada unidad compradora calcula el porcentaje
+    de procedimientos por tipo"""
     monto_por_contrato = df.groupby(
-        ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'NUMERO_PROCEDIMIENTO',
-         'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
+        ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
+         'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
         as_index=False
     ).IMPORTE_PESOS.sum()
     conteo_tipos = monto_por_contrato.groupby(
@@ -66,7 +77,7 @@ def porcentaje_procedimientos_por_tipo(df):
     return conteo_tipos
 
 
-def porcentaje_monto_tipo_procedimiento(df):
+def porcentaje_monto_tipo_procedimiento(df, **kwargs):
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
@@ -93,7 +104,7 @@ def porcentaje_monto_tipo_procedimiento(df):
     return monto_tipos
 
 
-def importe_promedio_por_contrato(df):
+def importe_promedio_por_contrato(df, **kwargs):
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
@@ -120,7 +131,7 @@ def importe_promedio_por_contrato(df):
     return df_feature
 
 
-def calcular_IHH_ID_contratos(df):
+def calcular_IHH_ID_contratos(df, **kwargs):
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
@@ -174,7 +185,7 @@ def calcular_IHH_ID_contratos(df):
     return df_feature
 
 
-def calcular_IHH_ID_monto(df):
+def calcular_IHH_ID_monto(df, **kwargs):
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
@@ -212,3 +223,242 @@ def calcular_IHH_ID_monto(df):
     # final join
     df_feature = pd.merge(uc_IHH, uc_ID, on='CLAVEUC', how='inner')
     return df_feature
+
+
+def tendencia_adjudicacion_directa(df, **kwargs):
+    # df_procs
+    def _estimar_pendiente(row):
+        y = row.values.reshape(-1, 1)
+        x = np.arange(0, y.shape[0]).reshape(-1, 1)
+        # model = Ridge(fit_intercept=False)
+        model = Ridge(fit_intercept=True)
+        model.fit(x, y)
+        pendiente = model.coef_.flatten()[0]
+        return pendiente
+    if df.shape[0] == 0:
+        return None
+    df = df.copy()
+    df = df.assign(
+        adjudicacion_directa=df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA'
+    )
+    cols = [
+        'CLAVEUC', 'FECHA_INICIO',
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'adjudicacion_directa'
+    ]
+    df = (df.loc[:, cols]
+          .drop_duplicates()
+          .assign(Year=df.FECHA_INICIO.dt.year)
+          .drop('FECHA_INICIO', axis=1)
+          .groupby(['CLAVEUC', 'Year', 'adjudicacion_directa'])
+          .NUMERO_PROCEDIMIENTO.nunique()
+          .reset_index()
+          .pivot_table(index=['CLAVEUC', 'Year'],
+                       columns=['adjudicacion_directa'],
+                       values='NUMERO_PROCEDIMIENTO')
+          .fillna(0)
+          .reset_index()
+          .rename(columns={True: 'num_adj_si',
+                           False: 'num_adj_no'}))
+    total = df[['num_adj_no', 'num_adj_si']].sum(axis=1)
+    df = df.assign(
+        pc_adjudicacion=(df.num_adj_si.divide(total) * 100)
+    )
+    df = (df.pivot(index='CLAVEUC',
+                   columns='Year',
+                   values='pc_adjudicacion')
+          .drop(2017, axis=1)
+          .fillna(0))
+
+    df = df.assign(
+        tendencia_adj_directa=df.apply(
+            _estimar_pendiente, axis=1)
+    )
+    df = (df.reset_index()
+          .loc[:, ['CLAVEUC', 'tendencia_adj_directa']])
+    df.columns.name = ''
+    return df
+
+
+# Datos de la tabla participantes
+
+def porcentaje_licitaciones_con_un_participante(df, **kwargs):
+    # usa tabla de participantes
+    if df.shape[0] == 0:
+        return None
+    df = df.copy()
+    df_feature = pd.DataFrame(
+        data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
+    col_name = 'pc_licitaciones_un_participante'
+    tipos_validos = {'LICITACION PUBLICA',
+                     'INVITACION A CUANDO MENOS TRES'}
+    # Filtro y saco uniques
+    df = df.loc[df.TIPO_PROCEDIMIENTO.isin(tipos_validos)]
+    df = (df.groupby(['CLAVEUC', 'NUMERO_PROCEDIMIENTO']).PROVEEDOR_CONTRATISTA.nunique()
+          .reset_index()
+          .rename(columns={'PROVEEDOR_CONTRATISTA': 'numero_proveedores'})
+          .groupby(['CLAVEUC', 'numero_proveedores']).NUMERO_PROCEDIMIENTO.count()
+          .reset_index()
+          .rename(columns={'NUMERO_PROCEDIMIENTO': 'numero_procedimientos'})
+          # Esta parte no me gusta pero de momento no se me ocurre otra forma
+          .pivot(index='CLAVEUC', columns='numero_proveedores', values='numero_procedimientos')
+          .fillna(0))
+    df = (df * 100).divide(df.sum(axis=1), axis='index')
+    df = df.rename(columns={1: col_name})
+    if col_name not in df.columns:
+        df = df.assign(col_name=0)
+        # raise ValueError('Todos los procedimientos tuvieron mas de un participante')
+    df = df.reset_index()
+    # left join
+    df_feature = pd.merge(df_feature, df.loc[:, ['CLAVEUC', col_name]],
+                          on='CLAVEUC', how='left').fillna(0)
+    return df_feature
+
+
+def procedimientos_promedio_por_participantes(df, **kwargs):
+    # tabla participantes
+    if df.shape[0] == 0:
+        return None
+    df = df.copy()
+    df_feature = (df.groupby(['CLAVEUC', 'NUMERO_PROCEDIMIENTO']).PROVEEDOR_CONTRATISTA.nunique()
+                    .reset_index()
+                    .groupby('CLAVEUC', as_index=False).PROVEEDOR_CONTRATISTA.mean()
+                    .assign(procs_promedio_por_participantes=lambda x: 1 / x.PROVEEDOR_CONTRATISTA)
+                    .loc[:, ['CLAVEUC', 'procs_promedio_por_participantes']])
+    return df_feature
+
+
+def indice_participacion(df, **kwargs):
+    # tabla participantes
+    if df.shape[0] == 0:
+        return None
+    df = df.copy()
+    df_participaciones = (df.groupby(['CLAVEUC', 'PROVEEDOR_CONTRATISTA'])
+                            .NUMERO_PROCEDIMIENTO.nunique()
+                            .reset_index()
+                            .rename(columns={'NUMERO_PROCEDIMIENTO': 'participaciones'}))
+    total_participaciones = (df_participaciones.groupby('CLAVEUC', as_index=False)
+                                               .participaciones.sum()
+                                               .rename(columns={'participaciones': 'tot_parts'}))
+    df_feature = pd.merge(df_participaciones,
+                          total_participaciones,
+                          on='CLAVEUC', how='inner')
+    df_feature = df_feature.assign(
+        pc_partipaciones=df_feature.participaciones.divide(df_feature.tot_parts)
+    )
+    df_feature = (df_feature.groupby('CLAVEUC', as_index=False)
+                            .pc_partipaciones.max()
+                            .rename(columns={'pc_partipaciones': 'pc_partipaciones_promedio'}))
+    df_feature = df_feature.loc[:, ['CLAVEUC', 'pc_partipaciones_promedio']]
+    return df_feature
+
+
+def procedimientos_por_participantes_unicos(df, **kwargs):
+    # tabla participantes
+    if df.shape[0] == 0:
+        return None
+    df = df.copy()
+    df_procs = df.groupby('CLAVEUC').NUMERO_PROCEDIMIENTO.nunique().reset_index()
+    df_parts = df.groupby('CLAVEUC').PROVEEDOR_CONTRATISTA.nunique().reset_index()
+    df_feature = pd.merge(df_procs, df_parts, on='CLAVEUC', how='inner')
+    df_feature = df_feature.assign(
+        procs_por_participantes=df_feature.NUMERO_PROCEDIMIENTO / df_feature.PROVEEDOR_CONTRATISTA
+    )
+    df_feature = df_feature.loc[:, ['CLAVEUC', 'procs_por_participantes']]
+    return df_feature
+
+
+def tendencia_incremento_participantes(df, **kwargs):
+    # participantes
+    def _estimar_pendiente(row):
+        # TODO: falta filtrar por nans
+        y = row.values.reshape(-1, 1)
+        x = np.arange(0, y.shape[0]).reshape(-1, 1)
+        # model = Ridge(fit_intercept=False)
+        model = Ridge(fit_intercept=True)
+        model.fit(x, y)
+        pendiente = model.coef_.flatten()[0]
+        pendiente *= -1
+        return pendiente
+    if df.shape[0] == 0:
+        return None
+    df = df.copy()
+    df = df.assign(
+        Year=df.NUMERO_PROCEDIMIENTO.map(lambda x: int(x.split('-')[3]))
+    )
+    df = (df.groupby(['CLAVEUC', 'Year', 'NUMERO_PROCEDIMIENTO'])
+            .PROVEEDOR_CONTRATISTA.nunique()
+            .reset_index())
+    df = df.groupby(
+        ['CLAVEUC', 'Year'], as_index=False
+    ).PROVEEDOR_CONTRATISTA.mean()
+    df = (df.pivot(index='CLAVEUC',
+                   columns='Year',
+                   values='PROVEEDOR_CONTRATISTA')
+            .loc[:, list(range(2012, 2018))]
+            .fillna(0))
+    df = df.assign(
+        disminucion_participacion=df.apply(
+            _estimar_pendiente, axis=1)
+    ).reset_index()
+    df = df.loc[:, ['CLAVEUC', 'disminucion_participacion']]
+    return df
+
+# def _crear_conexiones(df):
+#     def _asignar_total_procs(row):
+#         return procs_por_proveedor[row.poc_1] + procs_por_proveedor[row.poc_2]
+#     procs_por_proveedor = (df.groupby('PROVEEDOR_CONTRATISTA')
+#                              .NUMERO_PROCEDIMIENTO.count()
+#                              .to_dict())
+#     total_procs = df.NUMERO_PROCEDIMIENTO.nunique()
+#     total_pocs = df.PROVEEDOR_CONTRATISTA.nunique()
+#     # Se crea el grafo
+#     bi_graph = nx.Graph()
+#     bi_graph.add_nodes_from(df['PROVEEDOR_CONTRATISTA'], bipartite=0)
+#     bi_graph.add_nodes_from(df['NUMERO_PROCEDIMIENTO'], bipartite=1)
+#     edges = [
+#         (row.PROVEEDOR_CONTRATISTA, row.NUMERO_PROCEDIMIENTO, 1)
+#         for row in df.itertuples()
+#     ]
+#     bi_graph.add_weighted_edges_from(edges, weight='weight')
+#     graph = bipartite.weighted_projected_graph(
+#         bi_graph, df['PROVEEDOR_CONTRATISTA'].unique())
+#     edges = [
+#         {'poc_1': edge[0], 'poc_2': edge[1], 'weight': edge[2]['weight']}
+#         for edge in graph.edges(data=True)
+#     ]
+#     df_edges = pd.DataFrame(edges)
+#     # Casos sin procs en común
+#     if df_edges.shape[0] == 0:
+#         return None
+#     # Removemos a los que tienen uno o menos
+#     df_edges = df_edges.loc[df_edges.weight > 2]
+#     if df_edges.shape[0] == 0:
+#         return None
+#     # sumo los contratos de los dos pocs
+#     df_edges = df_edges.assign(suma_procs=df_edges.apply(_asignar_total_procs, axis=1))
+#     # concentracion de participacion
+#     score_participacion = df_edges.weight.divide(df_edges.suma_procs - df_edges.weight)
+#     df_edges = df_edges.assign(total_procs=total_procs,
+#                                total_pocs=total_pocs,
+#                                score_participacion=score_participacion)
+#     df_edges = df_edges.assign(
+#         participacion_conjunta=(
+#             df_edges.weight.divide(total_procs) * df_edges.score_participacion)
+#     )
+#     return df_edges
+#
+#
+# def participacion_conjunta(df):
+#     df = df.copy()
+#     all_ucs = df.CLAVEUC.unique()
+#     df_red = df.groupby(
+#         ['CLAVEUC', 'NUMERO_PROCEDIMIENTO', 'PROVEEDOR_CONTRATISTA'],
+#         as_index=False).PRECIO_TOTAL.count()
+#     df_red = df_red.drop('PRECIO_TOTAL', axis=1)
+#     for uc in all_ucs:
+#         pass
+
+
+# def score_participacion
