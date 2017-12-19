@@ -511,7 +511,7 @@ def pc_procs_sin_convocatoria(df: DataFrame,
 
 # Tabla de participantes
 
-def ganadores_por_participantes(df: DataFrame) -> DataFrame:
+def participantes_por_ganadores(df: DataFrame) -> DataFrame:
     """Tabla de participantes. """
     df = df.copy()
     # Se sacan los procedimientos que sí se realizaron
@@ -534,8 +534,9 @@ def ganadores_por_participantes(df: DataFrame) -> DataFrame:
         columns={'PROVEEDOR_CONTRATISTA': 'num_ganadores'})
     df_final = pd.merge(df_num_part, df_ganadores,
                         on='CLAVEUC', how='inner')
-    feature = df_final.num_ganadores.divide(df_final.num_participantes)
-    df_final = df_final.assign(ganadores_por_participantes=feature)
-    df_feature = df_final.loc[:, ['CLAVEUC', 'ganadores_por_participantes']]
+    # feature = df_final.num_ganadores.divide(df_final.num_participantes)
+    feature = df_final.num_participantes.divide(df_final.num_ganadores)
+    df_final = df_final.assign(participantes_por_ganadores=feature)
+    df_feature = df_final.loc[:, ['CLAVEUC', 'participantes_por_ganadores']]
     return df_feature
 

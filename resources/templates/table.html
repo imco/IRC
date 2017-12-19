@@ -1,0 +1,69 @@
+<html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                table {
+                    border: 1px solid #000;
+                    border-collapse: collapse;
+                    width: 95%;
+                    font-size: 20px;
+                }
+
+                tr, td, th {
+                    border: 1px solid #000;
+                    margin: 0;
+                    padding: 5px;
+                }
+
+                .border-gray {
+                    border: 1px solid #ccc;
+                }
+                .border-gray td {
+                    border: 1px solid #ccc;
+                }
+            </style>
+        </head>
+        <body>
+            <table>
+                <col>
+                <colgroup span="1"></colgroup>
+                <colgroup span="{{span}}"></colgroup>
+                <tbody>
+                    {% if uc %}
+                    <tr class="border-gray">
+                        <th style="text-align: right; background-color: #ccc;">UC:</th>
+                        <td colspan="{{span}}" scope="colgroup">{{uc}}</td>
+                    </tr>
+                    {% endif %}
+
+                    <tr class="border-gray">
+                        <th style="text-align: right; background-color: #ccc;">Dependencia:</th>
+                        <td colspan="{{span}}"scope="colgroup" >{{dependencia}}</td>
+                    </tr>
+                    <tr class="border-gray">
+                        <th style="text-align: right; background-color: #ccc;">Riesgo:</th>
+                        <td colspan="{{span}}" scope="colgroup" style="text-align: center;  background-color: {{riesgo.color}};">{{riesgo.valor}}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        {% for title in datos.columnas %}
+                            <th style="background-color: #ccc;">{{title}}</th>
+                        {% endfor %}
+                    </tr>
+
+                    {% for data_row in datos.valores %}
+                        <tr>
+                        {% for data_item in data_row %}
+                            {% if loop.index == 1 %}
+                                <th scope="row" style="background-color: #ccc;">{{data_item}}</th>
+                            {% else %}
+                                {% set value, color = data_item %}
+                                <td style="background-color: {{color}}">{{value}}</td>
+                            {% endif %}
+                        {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </body>
+    </html>

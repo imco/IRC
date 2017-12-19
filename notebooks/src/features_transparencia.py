@@ -6,6 +6,8 @@ import pandas as pd
 import numpy as np
 from sklearn.linear_model import Ridge
 
+DataFrame = pd.DataFrame
+
 
 def porcentaje_procedimientos_presenciales(df, **kwargs):
     df = df.assign(
@@ -405,6 +407,40 @@ def porcentaje_adjudicaciones_incompletas(df, **kwargs):
     return df_feature
 
 
+def porcentaje_procs_sin_junta_aclaracion(df, tipos_validos=None, **kwargs):
+    """Usa tabla scraper.
+    Calcula el porcentaje de procedimientos sin archivo de
+    junta de aclaraciones"""
+    if tipos_validos is None:
+        # solo aplica para Licitaciones publicas
+        tipos_validos = {
+            'LICITACION PUBLICA',
+            'LICITACION PUBLICA CON OSD'
+        }
+    df_claves = pd.DataFrame(
+        data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
+    col_interes = 'archivo_junta'
+    col_feature = 'pc_sin_junta'
+    df = df.loc[df.TIPO_PROCEDIMIENTO.isin(tipos_validos)].copy()
+    df_feature = (df.groupby(['CLAVEUC', col_interes],
+                             as_index=False).CODIGO_EXPEDIENTE.count()
+                    .pivot(index='CLAVEUC', columns=col_interes,
+                           values='CODIGO_EXPEDIENTE')
+                    .fillna(0)
+                    .rename(columns={0: col_feature}))
+    columnas = list(df_feature.columns.values)
+    if col_feature not in columnas:
+        raise ValueError('Todos los procedimientos tienen '
+                         'ese tipo de archivo')
+    df_feature = (df_feature * 100).divide(df_feature.sum(axis=1), axis=0)
+    df_feature = (df_feature.reset_index()
+                            .loc[:, ['CLAVEUC', col_feature]])
+    df_feature.columns.name = ''
+    df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
+    df_feature = df_feature.fillna(0)
+    return df_feature
+
+
 def porcentaje_invitaciones_incompletas(df, **kwargs):
     """Usa tabla scraper.
     Calcula el porcentaje de procedimientos (inv a 3)
@@ -474,5 +510,105 @@ def porcentaje_licitaciones_incompletas(df, **kwargs):
                             .loc[:, ['CLAVEUC', 'pc_licitaciones_incompletas']])
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
     df_feature = df_feature.fillna(0)
+    return df_feature
+
+
+# Tabla de participantes (y procedimientos)
+
+def pc_inconsistencias_en_monto(df_proc: DataFrame,
+                                df_part: DataFrame) -> DataFrame:
+    """Usa tabla de proc y participantes. Obtiene el porcetnaje de
+    procedimientos en donde el monto es diferente en participantes y
+    procedimientos"""
+    df_proc: DataFrame = df_proc.copy()
+    df_part: DataFrame = df_part.copy()
+    # Calcular el monto de los ganadores en participantes
+    df_ganadores = df_part.loc[df_part.ESTATUS_FALLO == 'GANADOR']
+    estatus = df_ganadores.ESTATUS_DE_PROPUESTA.mask(
+        df_ganadores.ESTATUS_DE_PROPUESTA == 'SIN REPORTAR', 'GANADOR'
+    )
+    df_ganadores = df_ganadores.assign(ESTATUS_DE_PROPUESTA=estatus)
+    df_ganadores = df_ganadores.loc[
+        df_ganadores.ESTATUS_DE_PROPUESTA == 'GANADOR']
+    monto_ganadores_procs = df_ganadores.groupby(
+        ['CLAVEUC', 'NUMERO_PROCEDIMIENTO'],
+        as_index=False).PRECIO_TOTAL.sum()
+    monto_ganadores_procs = monto_ganadores_procs.rename(
+        columns={'PRECIO_TOTAL': 'monto_participantes'})
+    # calcular el monto de procedimientos
+    monto_procs = df_proc.groupby(
+        ['CLAVEUC', 'NUMERO_PROCEDIMIENTO'], as_index=False
+    ).IMPORTE_PESOS.sum()
+    monto_procs = monto_procs.rename(
+        columns={'IMPORTE_PESOS': 'monto_procedimientos'})
+
+    df_final = pd.merge(monto_procs, monto_ganadores_procs,
+                        on=['CLAVEUC', 'NUMERO_PROCEDIMIENTO'], how='left')
+    # Se asigna el valor de procedimientos cuando no se tiene
+    # valor de participantes
+    monto_participantes = df_final.monto_participantes.mask(
+        df_final.monto_participantes.isnull(), df_final.monto_procedimientos
+    )
+    df_final = df_final.assign(monto_participantes=monto_participantes)
+    num_procs = (df_final.groupby('CLAVEUC', as_index=False)
+                         .NUMERO_PROCEDIMIENTO.count()
+                         .rename(columns={'NUMERO_PROCEDIMIENTO': 'num_procs'}))
+    is_diff = (df_final.monto_participantes != df_final.monto_procedimientos)
+    is_diff = is_diff.astype(int)
+    df_final = df_final.assign(is_diff=is_diff)
+    df_final = df_final.groupby('CLAVEUC', as_index=False).is_diff.sum()
+    df_final = pd.merge(df_final, num_procs, on='CLAVEUC', how='inner')
+    feature = df_final.is_diff.divide(df_final.num_procs)
+    df_final = df_final.assign(pc_inconsistencias_en_monto=feature)
+    df_featue = df_final.loc[:, ['CLAVEUC', 'pc_inconsistencias_en_monto']]
+    return df_featue
+
+
+def pc_procs_con_prov_faltantes(df_proc: DataFrame,
+                                df_part: DataFrame) -> DataFrame:
+    """Usa tabla de proc y participantes. Obtiene el porcetnaje de
+    proveedores que aparecen en participantes pero no en
+    procedimientos"""
+    col_interes = [
+        'CLAVEUC', 'NUMERO_PROCEDIMIENTO', 'PROVEEDOR_CONTRATISTA']
+    df_proc: DataFrame = (df_proc.copy().loc[:, col_interes])
+    df_part: DataFrame = df_part.copy()
+
+    # solo los ganadores
+    df_part = df_part.loc[df_part.ESTATUS_FALLO == 'GANADOR']
+    estatus = df_part.ESTATUS_DE_PROPUESTA.mask(
+        df_part.ESTATUS_DE_PROPUESTA == 'SIN REPORTAR', 'GANADOR'
+    )
+    df_part = df_part.assign(ESTATUS_DE_PROPUESTA=estatus)
+    df_part = df_part.loc[df_part.ESTATUS_DE_PROPUESTA == 'GANADOR']
+    df_part: DataFrame = df_part.loc[:, col_interes]
+    # conseguir conjuntos
+    df_proveedores_proc = (df_proc.groupby(['CLAVEUC', 'NUMERO_PROCEDIMIENTO'])
+                                  .agg({'PROVEEDOR_CONTRATISTA': lambda x: set(x)})
+                                  .reset_index()
+                                  .rename(columns={'PROVEEDOR_CONTRATISTA': 'proveedores_proc'}))
+    df_proveedores_part = (df_part.groupby(['CLAVEUC', 'NUMERO_PROCEDIMIENTO'])
+                                  .agg({'PROVEEDOR_CONTRATISTA': lambda x: set(x)})
+                                  .reset_index()
+                                  .rename(columns={'PROVEEDOR_CONTRATISTA': 'proveedores_part'}))
+    df_final = pd.merge(df_proveedores_proc, df_proveedores_part,
+                        on=['CLAVEUC', 'NUMERO_PROCEDIMIENTO'], how='left')
+    num_procs = (df_final.groupby('CLAVEUC', as_index=False)
+                         .NUMERO_PROCEDIMIENTO.count()
+                         .rename(columns={'NUMERO_PROCEDIMIENTO': 'num_procs'}))
+    # TODO: llenar los proveedores que faltan en participantes con la de procedimeintos
+    proveedores_part = df_final.proveedores_part.mask(
+        df_final.proveedores_part.isnull(), df_final.proveedores_proc
+    )
+    df_final = df_final.assign(proveedores_part=proveedores_part)
+    is_diff = df_final.proveedores_proc != df_final.proveedores_part
+    is_diff = is_diff.astype(int)
+    df_final = df_final.assign(is_diff=is_diff)
+    df_final = df_final.groupby('CLAVEUC', as_index=False).is_diff.sum()
+    df_final = pd.merge(df_final, num_procs,
+                        on='CLAVEUC', how='inner')
+    feature = df_final.is_diff.divide(df_final.num_procs)
+    df_final = df_final.assign(pc_procs_con_prov_faltantes=feature)
+    df_feature = df_final.loc[:, ['CLAVEUC', 'pc_procs_con_prov_faltantes']]
     return df_feature
 

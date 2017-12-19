@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 # Created by Raul Peralta-Lozada (11/10/17)
-
 import pandas as pd
+from typing import List, Tuple
+
+DataFrame = pd.DataFrame
 
 
 def interaccion_rfc_fantasma(df_procs, df_rfc_fantasma, **kwargs):
@@ -27,8 +29,8 @@ def interaccion_rfc_fantasma(df_procs, df_rfc_fantasma, **kwargs):
     contratos_total = contratos_total.reset_index()
     contratos_total = contratos_total.rename(
         columns={'CODIGO_CONTRATO': 'contratos_con_fantasmas'})
-    contratos_total = contratos_total.groupby('CLAVEUC',
-        as_index=False).contratos_con_fantasmas.sum()
+    contratos_total = contratos_total.groupby(
+        'CLAVEUC', as_index=False).contratos_con_fantasmas.sum()
     # monto con rfc fantasmas por uc
     monto_uc_contratos = monto_por_contrato.groupby(
         ['CLAVEUC', 'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
@@ -73,8 +75,8 @@ def interaccion_sancionados(df_procs, df_sancionados, **kwargs):
     monto_uc_contratos = monto_por_contrato.groupby(
         ['CLAVEUC', 'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
         as_index=False).IMPORTE_PESOS.sum()
-    monto_uc_contratos = monto_uc_contratos.groupby('CLAVEUC',
-        as_index=False).IMPORTE_PESOS.sum()
+    monto_uc_contratos = monto_uc_contratos.groupby(
+        'CLAVEUC', as_index=False).IMPORTE_PESOS.sum()
     monto_uc_contratos = monto_uc_contratos.rename(
         columns={'IMPORTE_PESOS': 'monto_con_sancionados'})
     # join the features
@@ -281,6 +283,90 @@ def diferente_estratificacion(df, **kwargs):
     df_feature.columns.name = ''
     return df_feature
 
+
+def pc_rotacion_top_proveedores(df: DataFrame,
+                                first_period: Tuple[int]=(2012, 2013),
+                                second_period: Tuple[int]=(2015, 2016),
+                                top_pc: float=20):
+    """Tabla de procedimientos. La rotacion puede no ser tan buena.
+    Tomar el top 20%"""
+    df: DataFrame = df.copy()
+    claves: DataFrame = pd.DataFrame(df.CLAVEUC.unique(),
+                                     columns=['CLAVEUC'])
+    df = df.assign(Year=df.FECHA_INICIO.dt.year)
+    cols = ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'Year']
+    montos = df.groupby(cols, as_index=False).IMPORTE_PESOS.sum()
+    # montos = montos.loc[montos.Year.isin({first_year, second_year})]
+    df_first = montos.loc[montos.Year.isin(first_period)]
+    df_second = montos.loc[montos.Year.isin(second_period)]
+    monto_total_first = (df_first.groupby('CLAVEUC', as_index=False)
+                                 .IMPORTE_PESOS.sum()
+                                 .rename(columns={'IMPORTE_PESOS': 'MONTO_TOTAL'}))
+    monto_total_second = (df_second.groupby('CLAVEUC', as_index=False)
+                                   .IMPORTE_PESOS.sum()
+                                   .rename(columns={'IMPORTE_PESOS': 'MONTO_TOTAL'}))
+    df_first = pd.merge(df_first, monto_total_first,
+                        on='CLAVEUC', how='inner')
+    df_second = pd.merge(df_second, monto_total_second,
+                         on='CLAVEUC', how='inner')
+    df_first = df_first.assign(
+        pc_monto=df_first.IMPORTE_PESOS.divide(df_first.MONTO_TOTAL)
+    ).drop(['IMPORTE_PESOS', 'MONTO_TOTAL', 'Year'], axis=1)
+    df_second = df_second.assign(
+        pc_monto=df_second.IMPORTE_PESOS.divide(df_second.MONTO_TOTAL)
+    ).drop(['IMPORTE_PESOS', 'MONTO_TOTAL', 'Year'], axis=1)
+    # TODO: se me hace raro que sea 20
+    threshold = top_pc / 100
+    group_first = []
+    for group, subdf in df_first.groupby('CLAVEUC'):
+        df_aux = subdf.sort_values('pc_monto', ascending=False)
+        df_aux = df_aux.assign(pc_monto_cumsum=df_aux.pc_monto.cumsum())
+        df_aux = df_aux.loc[df_aux.pc_monto_cumsum <= threshold]
+        if df_aux.shape[0] == 0:
+            df_aux = df_aux.iloc[0:1, :]
+        proveedores = set(df_aux.PROVEEDOR_CONTRATISTA.unique())
+        result = {'CLAVEUC': group, 'proveedores_first': proveedores}
+        group_first.append(result)
+    group_second = []
+    for group, subdf in df_second.groupby('CLAVEUC'):
+        df_aux = subdf.sort_values('pc_monto', ascending=False)
+        df_aux = df_aux.assign(pc_monto_cumsum=df_aux.pc_monto.cumsum())
+        df_aux = df_aux.loc[df_aux.pc_monto_cumsum <= threshold]
+        if df_aux.shape[0] == 0:
+            df_aux = df_aux.iloc[0:1, :]
+        proveedores = set(df_aux.PROVEEDOR_CONTRATISTA.unique())
+        result = {'CLAVEUC': group, 'proveedores_second': proveedores}
+        group_second.append(result)
+
+    df_first = pd.DataFrame(group_first)
+    df_second = pd.DataFrame(group_second)
+    df_final = pd.merge(claves, df_first, on='CLAVEUC', how='left')
+    df_final = pd.merge(df_final, df_second, on='CLAVEUC', how='left')
+    proveedores_first = df_final.proveedores_first.mask(
+        df_final.proveedores_first.isnull(), set()
+    )
+    proveedores_second = df_final.proveedores_second.mask(
+        df_final.proveedores_second.isnull(), set()
+    )
+    df_final = df_final.assign(
+        proveedores_first=proveedores_first,
+        proveedores_second=proveedores_second
+    )
+    output = []
+    for row in df_final.itertuples():
+        num = len(row.proveedores_first & row.proveedores_second)
+        if len(row.proveedores_first) == 0:
+            # TODO revisar caso default
+            pc_continuidad = 1
+        else:
+            pc_continuidad = num / len(row.proveedores_first)
+        pc_rotacion = 1 - pc_continuidad
+        output.append({'CLAVEUC': row.CLAVEUC,
+                       'pc_rotacion_top_proveedores': pc_rotacion})
+    df_final = pd.merge(pd.DataFrame(output), df_final, on='CLAVEUC', how='inner')
+    return df_final
+
+
 # Requiere la tabla de máximos
 
 
@@ -424,40 +510,6 @@ def promedio_convenios_por_proc(df, **kwargs):
     return df_feature
 
 
-def porcentaje_procs_sin_junta_aclaracion(df, tipos_validos=None, **kwargs):
-    """Usa tabla scraper.
-    Calcula el porcentaje de procedimientos sin archivo de
-    junta de aclaraciones"""
-    if tipos_validos is None:
-        # solo aplica para Licitaciones publicas
-        tipos_validos = {
-            'LICITACION PUBLICA',
-            'LICITACION PUBLICA CON OSD'
-        }
-    df_claves = pd.DataFrame(
-        data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
-    col_interes = 'archivo_convocatoria'
-    col_feature = 'pc_sin_junta'
-    df = df.loc[df.TIPO_PROCEDIMIENTO.isin(tipos_validos)].copy()
-    df_feature = (df.groupby(['CLAVEUC', col_interes],
-                             as_index=False).CODIGO_EXPEDIENTE.count()
-                    .pivot(index='CLAVEUC', columns=col_interes,
-                           values='CODIGO_EXPEDIENTE')
-                    .fillna(0)
-                    .rename(columns={0: col_feature}))
-    columnas = list(df_feature.columns.values)
-    if col_feature not in columnas:
-        raise ValueError('Todos los procedimientos tienen '
-                         'ese tipo de archivo')
-    df_feature = (df_feature * 100).divide(df_feature.sum(axis=1), axis=0)
-    df_feature = (df_feature.reset_index()
-                            .loc[:, ['CLAVEUC', col_feature]])
-    df_feature.columns.name = ''
-    df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
-    return df_feature
-
-
 def porcentaje_procs_sin_convocatoria(df, tipos_validos=None, **kwargs):
     """Usa tabla scraper.
     Calcula el porcentaje de procedimientos sin archivo de convocatoria"""
@@ -489,4 +541,34 @@ def porcentaje_procs_sin_convocatoria(df, tipos_validos=None, **kwargs):
     df_feature = df_feature.fillna(0)
     return df_feature
 
+
+# Tabla de participantes
+
+def ganadores_por_participantes(df: DataFrame) -> DataFrame:
+    """Tabla de participantes. """
+    df = df.copy()
+    # Se sacan los procedimientos que sí se realizaron
+    df_participantes = df.loc[df.ESTATUS_FALLO == 'GANADOR']
+    estatus = df_participantes.ESTATUS_DE_PROPUESTA.mask(
+        df_participantes.ESTATUS_DE_PROPUESTA == 'SIN REPORTAR', 'GANADOR'
+    )
+    df_participantes = df_participantes.assign(ESTATUS_DE_PROPUESTA=estatus)
+    df_num_part = (df_participantes.groupby('CLAVEUC')
+                                   .PROVEEDOR_CONTRATISTA.nunique()
+                                   .reset_index())
+    df_num_part = df_num_part.rename(
+        columns={'PROVEEDOR_CONTRATISTA': 'num_participantes'})
+    df_ganadores = df_participantes.loc[
+        df_participantes.ESTATUS_DE_PROPUESTA == 'GANADOR']
+    df_ganadores = (df_ganadores.groupby('CLAVEUC')
+                                .PROVEEDOR_CONTRATISTA.nunique()
+                                .reset_index())
+    df_ganadores = df_ganadores.rename(
+        columns={'PROVEEDOR_CONTRATISTA': 'num_ganadores'})
+    df_final = pd.merge(df_num_part, df_ganadores,
+                        on='CLAVEUC', how='inner')
+    feature = df_final.num_ganadores.divide(df_final.num_participantes)
+    df_final = df_final.assign(ganadores_por_participantes=feature)
+    df_feature = df_final.loc[:, ['CLAVEUC', 'ganadores_por_participantes']]
+    return df_feature
 

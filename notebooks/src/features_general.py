@@ -3,7 +3,7 @@
 # Created by Raul Peralta-Lozada (16/10/17)
 
 
-def monto_por_unidad_compradora(df):
+def monto_por_unidad_compradora(df, **kwargs):
     """Calcula el monto de la unidad compradora"""
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
@@ -18,7 +18,7 @@ def monto_por_unidad_compradora(df):
     return monto_por_uc
 
 
-def proveedores_distintos(df):
+def proveedores_distintos(df, **kwargs):
     """Calcula el número de proveedores distintos por unidad compradora"""
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
@@ -32,7 +32,7 @@ def proveedores_distintos(df):
     return pocs_distintos
 
 
-def procedimientos_distintos(df):
+def procedimientos_distintos(df, **kwargs):
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
@@ -46,7 +46,7 @@ def procedimientos_distintos(df):
     return procs_distintos
 
 
-def numero_de_contratos(df):
+def numero_de_contratos(df, **kwargs):
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],

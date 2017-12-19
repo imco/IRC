@@ -106,7 +106,7 @@ def clean_procedimientos_file(name, year):
     df = pd.read_excel(
         '{0}'.format(name),
         dtype={
-            'FOLIO_RUPC': str, 'CLAVEUC': str, 'CODIGO_CONTRATO': str,
+            'CLAVEUC': str, 'CODIGO_CONTRATO': str,
             'CODIGO_EXPEDIENTE': str, 'FOLIO_RUPC': str,
             'IMPORTE_CONTRATO': float, 'APORTACION_FEDERAL': float
         }

@@ -3,9 +3,11 @@
 # Created by Raul Peralta-Lozada (28/09/17)
 import pandas as pd
 import numpy as np
-import networkx as nx
-from networkx.algorithms import bipartite
+# import networkx as nx
+# from networkx.algorithms import bipartite
 from sklearn.linear_model import Ridge
+
+DataFrame = pd.DataFrame
 
 
 def contratos_por_proveedor(df, **kwargs):
@@ -63,6 +65,12 @@ def porcentaje_procedimientos_por_tipo(df, **kwargs):
         index='CLAVEUC', columns='TIPO_PROCEDIMIENTO',
         values='NUMERO_PROCEDIMIENTO'
     ).fillna(0)
+    # TODO: necesita un refactor
+    adj_dir_e_inv3 = (conteo_tipos['ADJUDICACION DIRECTA'] +
+                      conteo_tipos['INVITACION A CUANDO MENOS TRES'])
+    drop_cols = ['ADJUDICACION DIRECTA', 'INVITACION A CUANDO MENOS TRES']
+    conteo_tipos = (conteo_tipos.assign(ADJ_DIRECTA_INV3=adj_dir_e_inv3)
+                                .drop(drop_cols, axis=1))
     total_procedimientos = conteo_tipos.sum(axis=1)
     conteo_tipos = conteo_tipos * 100
     conteo_tipos = conteo_tipos.divide(total_procedimientos, axis='index')
@@ -90,6 +98,12 @@ def porcentaje_monto_tipo_procedimiento(df, **kwargs):
         index='CLAVEUC', columns='TIPO_PROCEDIMIENTO',
         values='IMPORTE_PESOS'
     ).fillna(0)
+    # TODO: necesita un refactor
+    adj_dir_e_inv3 = (monto_tipos['ADJUDICACION DIRECTA'] +
+                      monto_tipos['INVITACION A CUANDO MENOS TRES'])
+    drop_cols = ['ADJUDICACION DIRECTA', 'INVITACION A CUANDO MENOS TRES']
+    monto_tipos = (monto_tipos.assign(ADJ_DIRECTA_INV3=adj_dir_e_inv3)
+                              .drop(drop_cols, axis=1))
     total_montos = monto_tipos.sum(axis=1)
     monto_tipos = monto_tipos * 100
     monto_tipos = monto_tipos.divide(total_montos, axis='index')
@@ -113,8 +127,10 @@ def importe_promedio_por_contrato(df, **kwargs):
     contratos_total = monto_por_contrato.groupby(
         ['CLAVEUC', 'NUMERO_PROCEDIMIENTO']).CODIGO_CONTRATO.nunique()
     contratos_total = contratos_total.reset_index()
-    contratos_total = contratos_total.rename(columns={'CODIGO_CONTRATO': 'conteo_contratos'})
-    contratos_total = contratos_total.groupby('CLAVEUC', as_index=False).conteo_contratos.sum()
+    contratos_total = contratos_total.rename(
+        columns={'CODIGO_CONTRATO': 'conteo_contratos'})
+    contratos_total = (contratos_total.groupby('CLAVEUC', as_index=False)
+                                      .conteo_contratos.sum())
 
     monto_uc_contratos = monto_por_contrato.groupby(
         ['CLAVEUC', 'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'], as_index=False
@@ -281,6 +297,56 @@ def tendencia_adjudicacion_directa(df, **kwargs):
     return df
 
 
+def c4_monto_total(df):
+    """Tabla de procedimientos"""
+    df = df.copy()
+    monto_por_proc = df.groupby(
+        ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'NUMERO_PROCEDIMIENTO'],
+        as_index=False
+    ).IMPORTE_PESOS.sum()
+    monto_por_prov = monto_por_proc.groupby(
+        ['CLAVEUC', 'PROVEEDOR_CONTRATISTA'],
+        as_index=False
+    ).IMPORTE_PESOS.sum()
+    monto_total = (monto_por_prov.groupby('CLAVEUC', as_index=False)
+                                 .IMPORTE_PESOS.sum()
+                                 .rename(columns={'IMPORTE_PESOS': 'TOTAL'}))
+    monto_por_prov = pd.merge(monto_por_prov, monto_total,
+                              on='CLAVEUC', how='inner')
+    pc_monto = monto_por_prov.IMPORTE_PESOS.divide(monto_por_prov.TOTAL)
+    monto_por_prov = monto_por_prov.drop(['IMPORTE_PESOS', 'TOTAL'], axis=1)
+    monto_por_prov = monto_por_prov.assign(pc_monto=pc_monto)
+    groups = []
+    for group, sub_df in monto_por_prov.groupby('CLAVEUC'):
+        feature = sub_df.pc_monto.nlargest(4).sum()
+        groups.append({'CLAVEUC': group, 'c4_monto_total': feature})
+
+    return pd.DataFrame(groups)
+
+
+def c4_num_procedimientos(df):
+    """ Usa la tabla de procedimientos"""
+    df = df.copy()
+    procs_por_prov = df.groupby(
+        ['CLAVEUC', 'PROVEEDOR_CONTRATISTA'],
+    ).NUMERO_PROCEDIMIENTO.nunique()
+    procs_por_prov = procs_por_prov.reset_index()
+    procs_total = (procs_por_prov.groupby('CLAVEUC', as_index=False)
+                                 .NUMERO_PROCEDIMIENTO.sum()
+                                 .rename(columns={'NUMERO_PROCEDIMIENTO': 'TOTAL'}))
+    procs_por_prov = pd.merge(procs_por_prov, procs_total,
+                              on='CLAVEUC', how='inner')
+    pc_procs = procs_por_prov.NUMERO_PROCEDIMIENTO.divide(procs_por_prov.TOTAL)
+    procs_por_prov = procs_por_prov.drop(['NUMERO_PROCEDIMIENTO', 'TOTAL'],
+                                         axis=1)
+    procs_por_prov = procs_por_prov.assign(pc_procs=pc_procs)
+    groups = []
+    for group, sub_df in procs_por_prov.groupby('CLAVEUC'):
+        feature = sub_df.pc_procs.nlargest(4).sum()
+        groups.append({'CLAVEUC': group, 'c4_num_procedimientos': feature})
+    return pd.DataFrame(groups)
+
+
 # Datos de la tabla participantes
 
 def porcentaje_licitaciones_con_un_participante(df, **kwargs):
@@ -405,6 +471,7 @@ def tendencia_incremento_participantes(df, **kwargs):
     df = df.loc[:, ['CLAVEUC', 'disminucion_participacion']]
     return df
 
+
 # def _crear_conexiones(df):
 #     def _asignar_total_procs(row):
 #         return procs_por_proveedor[row.poc_1] + procs_por_proveedor[row.poc_2]
@@ -460,5 +527,3 @@ def tendencia_incremento_participantes(df, **kwargs):
 #     for uc in all_ucs:
 #         pass
 
-
-# def score_participacion
