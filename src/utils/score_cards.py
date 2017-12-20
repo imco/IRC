@@ -22,21 +22,14 @@ def escalar_features(df: DataFrame,
                      rango: Tuple[int, int]) -> DataFrame:
     """Se escalan los features de 0 a 100"""
     for col in cols:
-        # scaler = MinMaxScaler(rango)
-        # X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
-        # X_scaled = X_std * (max - min) + min
         x = df[col].values
         data_min = np.nanmin(x)
         data_max = np.nanmax(x)
         data_range = data_max - data_min
         scaled_value = (x - data_min) / data_range
         scaled_value = scaled_value * 100
-        # print(scaled_value)
         df.loc[:, col] = pd.Series(data=scaled_value.flatten(),
                                    index=df.index)
-        # scaled_value = scaler.fit_transform(df[col].values.reshape(-1, 1))
-        # df.loc[:, col] = pd.Series(data=scaled_value.flatten(),
-        #                            index=df.index)
     return df
 
 
@@ -340,7 +333,7 @@ def convert_html_to_pdf(input_dir: str,
     if mapper is None:
         grupos = defaultdict(list)
         for i, file in enumerate(files_html):
-            grupos[f'salida_{i % 50}'].append(file.as_posix())
+            grupos[f'salida_{i % 5}'].append(file.as_posix())
         grupos = dict(grupos)
     else:
         grupos = _groupby_dep(files_html, mapper)

@@ -6,7 +6,7 @@ Por su naturaleza, todos los documentos incluidos en el repositorio pueden ser u
 Dentro del repositorio se encuentran tres apartados:
 1. notebooks: Todos los scripts necesarios para limpiar, procesar y analizar las bases de datos
 2. scraper: Documentación metodológica de cómo se llevó a cabo el web scraping de los procedimientos publicados en Compranet
-(https://compranet.funcionpublica.gob.mx/web/login.html) 
+(https://compranet.funcionpublica.gob.mx/web/login.html)
 3. Datos procesados: Conjunto de bases de datos que se utilizaron para la obtención de resultados
 
 Por un lado, los apartados uno y dos se componen completamente de código almacenado en la plataforma GitHub. Esta plataforma permite descargar o clonar todo el código en tu computadora, subir o crear nuevos archivos, proponer mejoras o correcciones al proceso, entre otros. Por otro lado, el conjunto de datos procesados se conservan en un servicio de almacenamiento en la nube provisto por Amazon.
@@ -25,5 +25,33 @@ Esta serie de beneficios permite expandir el alcance del proyecto a prácticamen
 
 
 ## Datos procesados
-* [Procedimientos y contrataciones 2012-2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos_all_2017_09_25.psv)
-* [Participantes 2010 - 2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes_2017_09_25.zip)
+Para calcular los features de cada concepto se requieren las siguiente tablas:
+* [Tabla de Procedimientos y Contrataciones 2012-2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.psv) [(En fomato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.parquet)
+* [Tabla de Participantes 2010 - 2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes.zip) [(En fomato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes_parquet.zip)
+* [Datos del scraper (raw)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/raw_data_scraper_20170608.json)
+* [Tabla limpia del scraper](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/tabla_scraper_features.csv)
+* [Tabla de proveedores sancionados](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/SancionProveedoresContratistas.xls)
+* [Tabla de RFC fantasma](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/RFC_fantasma.csv)
+* [Relación de montos máximos por tipo de contratación](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/Montos_maximos.csv)
+* [Tabla con los nombres de las unidades compradoras](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/nombres_unidades_compradoras.csv)
+* [Directorio de unidades compradoras](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/directorio_UC.xlsx)
+* [Códigos repetidos en la tabla de procedimientos](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/codigos_expediente_repetidos.csv)
+
+## Instalación
+El análisis de este proyecto se realizó con python, para ejecutar el código de este repositorio se recomienda instalar [miniconda](https://conda.io/miniconda.html).
+Una vez instalado puedes correr el siguiente comando (en este mismo directorio) para que se instalen todas las dependencias:
+```
+$ conda env create -f environment.yml
+```
+Este comando creará un entorno virtual con los paquete necesarios, lo puedes activar con la siguiente línea:
+```
+$ source activate compranet
+```
+o para versiones más recientes de miniconda con:
+```
+$ conda activate compranet
+```
+Finalmente, instala el código de este proyecto con:
+```
+$ pip install --editable .
+```

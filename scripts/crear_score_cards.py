@@ -40,7 +40,7 @@ if __name__ == '__main__':
     procedimientos_path = './data/bases/procedimientos.parquet'
     path_json_unidades = './data/score_cards/input_unidades/'
     path_json_dependencias = './data/score_cards/input_dependencias/'
-    directorio_uc_path = './data/bases/Nombres_unidades_compradoras.csv'
+    directorio_uc_path = './data/bases/nombres_unidades_compradoras.csv'
     # Variable de ponderacion
     # 'conteo_procedimientos', 'monto_total'
     COLUMN_WEIGHT: str = 'monto_total'
@@ -149,7 +149,7 @@ if __name__ == '__main__':
             [list(df.index.unique()) for df in scores_dep_con_riesgo.values()]
         )
     )
-    # TODO: el diccionario de nombres no esta completo
+    # TODO: buscar una mejor manera de hacerlo
     templates_uc = create_score_card_uc_dict(scores_tipo_con_riesgo,
                                              unidades_compradoras,
                                              nombres_uc,
