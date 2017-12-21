@@ -5,11 +5,11 @@ import pandas as pd
 from joblib import Parallel, delayed
 from currency_converter import CurrencyConverter
 from typing import List
-from compranet_src.clean_data_utils import procesar_archivo_procedimientos
-from compranet_src.clean_data_utils import convert_to_mxn
-from compranet_src.clean_data_utils import (get_claveuc_nombre,
-                                            get_claveuc_real,
-                                            get_claveuc_proc)
+from utils.clean_data import procesar_archivo_procedimientos
+from utils.clean_data import convert_to_mxn
+from utils.clean_data import (get_claveuc_nombre,
+                              get_claveuc_real,
+                              get_claveuc_proc)
 DataFrame = pd.DataFrame
 
 columnas_procs: List[str] = [
