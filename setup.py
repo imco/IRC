@@ -20,6 +20,7 @@ setup(
     author_email=EMAIL,
     url=URL,
     packages=find_packages(exclude=('tests',)),
+    package_dir={'': 'src'},
     install_requires=REQUIRED,
     include_package_data=True,
     license='GPL-3.0',
