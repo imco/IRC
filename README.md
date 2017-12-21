@@ -55,3 +55,13 @@ Finalmente, instala el código de este proyecto con:
 ```
 $ pip install --editable .
 ```
+
+## Cómo crear las score cards
+Para generar los features debes de correr el código que está
+en la notebook [generacion_features.ipynb](https://github.com/opintel/como-identificar-focos-rojos-en-contrataciones-publicas/blob/master/notebooks/generacion_features.ipynb).
+Es necesario tener los datos procesados y ajustar las rutas dentro de la notebook.
+
+Cuando se tengan los features calculados puedes usar el script
+[crear_score_cards.py](https://github.com/opintel/como-identificar-focos-rojos-en-contrataciones-publicas/blob/master/scripts/crear_score_cards.py)
+que está en la carpeta de scripts para generar los archivos pdf con las score cards, de igual manera
+tienes que ajustar las rutas de los datos procesados y features.
