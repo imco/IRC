@@ -26,8 +26,8 @@ Esta serie de beneficios permite expandir el alcance del proyecto a prácticamen
 
 ## Datos procesados
 Para calcular los features de cada concepto se requieren las siguiente tablas:
-* [Tabla de Procedimientos y Contrataciones 2012-2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.psv) [(En fomato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.parquet)
-* [Tabla de Participantes 2010 - 2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes.zip) [(En fomato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes_parquet.zip)
+* [Tabla de Procedimientos y Contrataciones 2012-2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.psv) [(En formato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.parquet)
+* [Tabla de Participantes 2010 - 2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes.zip) [(En formato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes_parquet.zip)
 * [Datos del scraper (raw)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/raw_data_scraper_20170608.json)
 * [Tabla limpia del scraper](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/tabla_scraper_features.csv)
 * [Tabla de proveedores sancionados](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/SancionProveedoresContratistas.xls)
