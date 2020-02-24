@@ -68,7 +68,7 @@ func startScrapping(startExp, endExp int, htmlDir string, browser *browser.Brows
 	newSession := false
 	// loop principal de scraping
 	for idCompranet := startExp; idCompranet <= endExp; idCompranet++ {
-		expedienteURL := fmt.Sprintf("https://compranet.funcionpublica.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", idCompranet)
+		expedienteURL := fmt.Sprintf("https://compranet.hacienda.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", idCompranet)
 		exp, err := getExpedienteData(idCompranet, expedienteURL, browser)
 		if err != nil { //En caso que falle compranet por algun motivo
 			if _, ok := err.(*ScrapErr); ok { //revisar que el tipo del error sea uno nuestro
@@ -98,7 +98,7 @@ func startScrapping(startExp, endExp int, htmlDir string, browser *browser.Brows
 		if idCompranet%100 == 0 || newSession {
 			log.Println("getting new session")
 			time.Sleep(10 * time.Second)
-			browser, err = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
+			browser, err = getNewBrowserWithSession("https://compranet.hacienda.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
 			if err != nil {
 				return idCompranet, fmt.Errorf("no puedo abrir la pagina: %v", err)
 			}
@@ -132,7 +132,7 @@ func main() {
 	rawHTMLFolder := "htmls"
 	os.Mkdir(rawHTMLFolder, 0777)
 
-	browser, err := getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
+	browser, err := getNewBrowserWithSession("https://compranet.hacienda.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
 	if err != nil {
 		log.Fatalf("no puedo abrir la pagina: %v", err)
 	}
@@ -144,7 +144,7 @@ func main() {
 		if err != nil { //En caso de error, dormir 120 segundos y reintentar
 			log.Printf("could not continue scraping, %v, sleeping for 120 seconds", err)
 			time.Sleep(120 * time.Second)
-			browser, _ = getNewBrowserWithSession("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
+			browser, _ = getNewBrowserWithSession("https://compranet.hacienda.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
 			log.Printf("restarting from %d", lastRead)
 			startVal = lastRead
 		}

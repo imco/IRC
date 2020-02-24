@@ -100,9 +100,9 @@ func (c *CustomBrowser) MakePost(session string, pURL string, urlValues url.Valu
 	headers.Set("Cookie", "JSESSIONID="+cookie[0].Value)
 	headers.Set("Connection", "keep-alive")
 	headers.Set("Faces-Request", "partial/ajax")
-	headers.Set("Referer", "https://cnet.funcionpublica.gob.mx/servicios/consultaRUPC.jsf")
-	headers.Set("Host", "cnet.funcionpublica.gob.mx")
-	headers.Set("Origin", "https://cnet.funcionpublica.gob.mx")
+	headers.Set("Referer", "https://cnet.hacienda.gob.mx/servicios/consultaRUPC.jsf")
+	headers.Set("Host", "cnet.hacienda.gob.mx")
+	headers.Set("Origin", "https://cnet.hacienda.gob.mx")
 	headers.Set("Accept", "application/xml, text/xml, */*; q=0.01")
 	headers.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36")
 	c.Browser.SetHeadersJar(headers)
@@ -142,7 +142,7 @@ func getHtmlFromXml(doc *xx.XmlDocument, query string) (html *goquery.Document, 
 }
 
 func main() {
-	const CompranetURL = "https://cnet.funcionpublica.gob.mx/servicios/consultaRUPC.jsf"
+	const CompranetURL = "https://cnet.hacienda.gob.mx/servicios/consultaRUPC.jsf"
 	//TODO: utlizar urfave/cli para manejar flag y línea de comandos
 
 	//definicion de flags y de valores iniciales

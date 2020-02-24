@@ -26,7 +26,7 @@ func main() {
 
 	bow := surf.NewBrowser()
 	bow.SetCookieJar(jar.NewMemoryCookies())
-	ferr := bow.Open("https://compranet.funcionpublica.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
+	ferr := bow.Open("https://compranet.hacienda.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
 	if ferr != nil {
 		panic(ferr)
 	}
