@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+
+/**
+ * Filters valid documents in a data.json file.
+ *
+ * Usage: './scripts/valid data.json
+ */
+const fs = require('fs')
+const ndjson = require('ndjson')
+
+const args = process.argv.slice(2)
+const filepath = args[0]
+const toHave = args[1] || 'descripcion'
+
+function run () {
+  fs.createReadStream(filepath)
+    .pipe(ndjson.parse())
+    .on('data', function (obj) {
+      if (obj[toHave] && obj[toHave].length) {
+        console.log('%j', obj)
+      }
+    })
+}
+
+run()
