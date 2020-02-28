@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+
+/**
+ * Finds missing sequence ids from a log.out file.
+ *
+ * Usage: './scripts/missing log.out inicio fin
+ * Example: './scripts/missing log.out 1300000 1400000
+ */
+const assert = require('assert')
+const fs = require('fs')
+const { promisify } = require('util')
+const read = promisify(fs.readFile)
+
+assert.deepEqual(missingInSequence([1,2,4,6], 1, 6), [3,5])
+assert.deepEqual(missingInSequence([1,3,4,5], 1, 5), [2])
+assert.deepEqual(missingInSequence([1,2,3,4], 1, 4), [])
+assert.deepEqual(missingInSequence([2,3,4], 1, 4), [1])
+assert.deepEqual(missingInSequence([3,5], 1, 5), [1, 2, 4])
+assert.deepEqual(missingInSequence([1,3,4,5], 1, 6), [2, 6])
+
+/**
+ * Find missing elements in a number sequence
+ * @param {Array} values in string format (as read from file)
+ * @param {Number} lb for the lower bound
+ * @param {Number} ub for the upper bound
+ * @returns {Array} missingInSequence
+ */
+function missingInSequence (values, lb, ub) {
+  const missing = []
+  let prev = Number(values[0])
+
+  // Starts ahead
+  for (let n = lb; n < prev; n++) {
+    missing.push(n)
+  }
+
+  for (let value of values) {
+    const curr = Number(value)
+    const diff = curr - prev
+    for (let i = 1; i < diff; i++) {
+      missing.push(prev + i)
+    }
+
+    prev = curr
+  }
+
+  // Ends before
+  for (let n = prev + 1; n <= ub; n++) {
+    missing.push(n)
+  }
+
+  return missing
+}
+
+/**
+ * Reads a file, trims, and prints the result of missingInSequence
+ */
+async function analyze (filename, lb, ub) {
+  try {
+    const data = await read(filename)
+    const lines = data
+      .toString()
+      .trim()
+      .split('\n')
+
+    let missing = missingInSequence(lines, lb, ub)
+    console.log('%s', missing.join('\n'))
+  } catch (e) {
+    console.log(e.message)
+  }
+}
+
+const args = process.argv.slice(2)
+const filename = args[0]
+const lowerbound = Number(args[1])
+const upperbound = Number(args[2])
+
+if (args.length < 3 || [lowerbound, upperbound].some(Number.isNaN)) {
+  console.log('usage: node missing.js filepath lb ub\n')
+  const msg = 'Needs a filepath and two numeric values'
+  throw new Error(msg)
+}
+
+analyze(filename, lowerbound, upperbound)
