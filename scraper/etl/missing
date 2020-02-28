@@ -76,7 +76,7 @@ const lowerbound = Number(args[1])
 const upperbound = Number(args[2])
 
 if (args.length < 3 || [lowerbound, upperbound].some(Number.isNaN)) {
-  console.log('usage: node missing.js filepath lb ub\n')
+  console.log('usage: ./missing filepath lb ub\n')
   const msg = 'Needs a filepath and two numeric values'
   throw new Error(msg)
 }
