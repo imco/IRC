@@ -14,6 +14,20 @@ Si no introduces valores de inicio y final, el scraper iniciará en 1 y terminar
 
 En el archivo `log.out` se almacenan los ids que se pudieron obtener correctamente. Dentro de `data.json` se almacenan los Expedientes extraidos en formato [JSON lines](http://jsonlines.org/). En la carpeta `html` se encuentra el html en crudo del expediente extraido, ordenado por ID interno de compranet.
 
+Para trabajar una lista no secuencial de expedientes de Compranet,
+utiliza el parámetro -ids para pasar el nombre de un archivo donde se
+encuentre la lista de ids a scrapear; uno por línea.
+
+```bash
+(base) ➜  scraper git:(scrape-a-list) ✗ echo "105\n109\n110" >> algunos.txt
+(base) ➜  scraper git:(scrape-a-list) ✗ ./scraper -ids algunos.txt
+cargando lista de ids de archivo
+2020/03/02 17:40:22 ended exp: 105
+2020/03/02 17:40:22 getting new session
+2020/03/02 17:40:43 ended exp: 109
+2020/03/02 17:40:45 ended exp: 110
+```
+
 ## Uso en modo desarrollo.
 
 Clona el repo dentro de tu `GOHOME` en la carpeta:
