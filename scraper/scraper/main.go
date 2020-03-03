@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"log"
 	"os"
 
@@ -58,57 +59,62 @@ func openFile(name string) *os.File {
 	return file
 }
 
+func scrape(idCompranet int, htmlDir string, browser *browser.Browser, outFile *os.File, logFile *os.File) (int, error) {
+	expedienteURL := fmt.Sprintf("https://compranet.hacienda.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", idCompranet)
+	exp, err := getExpedienteData(idCompranet, expedienteURL, browser)
+	if err != nil {
+		return idCompranet, err
+	} else {
+		// toca obtener las tablas y datos faltantes
+		tables := browser.Find("table")
+		exp.AddTables(tables)
+		exp.FechaScrap = time.Now().Unix() //timestamp para saber el momento exacto de extracción
+		jstring := string(exp.ToJson())    //construye el JSON que se va a guardar en el outFile
+		outFile.WriteString(jstring + "\n")
+		err = exp.SaveRawHTML(browser, htmlDir) //almacenamos el HTML sin procesar
+		if err != nil {
+			log.Printf("no puedo escribir el archivo HTML: %v", err)
+		}
+		writeLastToLog(logFile, idCompranet) //y llevamos registro de lo último que se pudo guardar
+		time.Sleep(2 * time.Second)          //TODO: encontrar intervalo random para que compranet no explote
+		log.Printf("ended exp: %d", idCompranet)
+	}
+
+	return idCompranet, nil
+}
+
 // startScrapping extrae los expedientes de compranet. Requiere como parametros el id de expediente inicial, el
 // expediente final, el directorio de salida de los archivos HTML, un surf browser, y archivos de salida y de logeo.
 // En caso de error al regenerar una nueva sesión, regresa un error y el último expediente extraido
-func startScrapping(startExp, endExp int, htmlDir string, browser *browser.Browser, outFile *os.File, logFile *os.File) (int, error) {
-	if endExp < startExp {
-		return 0, fmt.Errorf("el valor de inicio debe ser menor al del final")
-	}
+func startScrapping(ids []int, htmlDir string, browser *browser.Browser, outFile *os.File, logFile *os.File) (int, error) {
+	var lastRead int
+	var err error
+
 	newSession := false
 	// loop principal de scraping
-	for idCompranet := startExp; idCompranet <= endExp; idCompranet++ {
-		expedienteURL := fmt.Sprintf("https://compranet.hacienda.gob.mx/esop/toolkit/opportunity/opportunityDetail.do?opportunityId=%d&oppList=PAST", idCompranet)
-		exp, err := getExpedienteData(idCompranet, expedienteURL, browser)
+	for i, idCompranet := range ids {
+		lastRead, err = scrape(idCompranet, htmlDir, browser, outFile, logFile)
 		if err != nil { //En caso que falle compranet por algun motivo
 			if _, ok := err.(*ScrapErr); ok { //revisar que el tipo del error sea uno nuestro
-				// log.Printf("remote error: %v", sc)
-				return idCompranet, err
+				return lastRead, err
 			}
 			newSession = true
 			log.Printf("error: %v", err) //No se obtuvieron datos para ese id
-			// return idCompranet, err
-		} else {
-			// toca obtener las tablas y datos faltantes
-			tables := browser.Find("table")
-			exp.AddTables(tables)
-			exp.FechaScrap = time.Now().Unix() //timestamp para saber el momento exacto de extracción
-			jstring := string(exp.ToJson())    //construye el JSON que se va a guardar en el outFile
-			outFile.WriteString(jstring + "\n")
-			err = exp.SaveRawHTML(browser, htmlDir) //almacenamos el HTML sin procesar
-			if err != nil {
-				log.Printf("no puedo escribir el archivo HTML: %v", err)
-			}
-			writeLastToLog(logFile, idCompranet) //y llevamos registro de lo último que se pudo guardar
-			time.Sleep(2 * time.Second)          //TODO: encontrar intervalo random para que compranet no explote
-			log.Printf("ended exp: %d", idCompranet)
-
 		}
+
 		// reiniciar browser despues de 100 requests
-		if idCompranet%100 == 0 || newSession {
+		if i%100 == 0 || newSession {
 			log.Println("getting new session")
 			time.Sleep(10 * time.Second)
 			browser, err = getNewBrowserWithSession("https://compranet.hacienda.gob.mx/esop/guest/go/public/opportunity/past?locale=es_MX")
 			if err != nil {
-				return idCompranet, fmt.Errorf("no puedo abrir la pagina: %v", err)
+				return lastRead, fmt.Errorf("no puedo abrir la pagina: %v", err)
 			}
 			newSession = false
-
 		}
-
 	}
 
-	return endExp, nil
+	return lastRead, nil
 }
 
 func main() {
@@ -118,11 +124,44 @@ func main() {
 	//definicion de flags y de valores iniciales
 	var startVal int
 	var endVal int
+	var ids []int
 	flag.IntVar(&startVal, "inicio", 1, "valor de expediente inicial")
 	flag.IntVar(&endVal, "fin", 1209999, "valor de expediente final")
+	idsFilename := flag.String("ids", "undef", "archivo [opcional] con lista de ids")
 	flag.Parse()
 
-	//
+	// Construye lista para scrapear en base a un archivo
+	// o a una secuencia de ids de startVal a endVal
+	if *idsFilename != "undef" {
+		fmt.Println("cargando lista de ids de archivo")
+		f, err := os.Open(*idsFilename)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		s := bufio.NewScanner(f)
+		for s.Scan() {
+			val, err := strconv.Atoi(s.Text())
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			ids = append(ids, val)
+		}
+
+		// Para que podamos romper el loop infinito
+		// NOTA: Asume que no hay duplicados en la lista
+		endVal = ids[len(ids)-1]
+	} else if endVal < startVal {
+		log.Fatal("el valor de inicio debe ser menor al del final")
+	} else {
+		// Rango inclusivo [startVal, endVal]
+		ids = make([]int, endVal-startVal+1)
+		for i := range ids {
+			ids[i] = startVal + i
+		}
+	}
+
 	outputFile := openFile("data.json")
 	defer outputFile.Close()
 
@@ -140,7 +179,7 @@ func main() {
 
 	//Loop infinito de scrapeo
 	for {
-		lastRead, err = startScrapping(startVal, endVal, rawHTMLFolder, browser, outputFile, logFile)
+		lastRead, err = startScrapping(ids, rawHTMLFolder, browser, outputFile, logFile)
 		if err != nil { //En caso de error, dormir 120 segundos y reintentar
 			log.Printf("could not continue scraping, %v, sleeping for 120 seconds", err)
 			time.Sleep(120 * time.Second)
