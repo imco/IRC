@@ -16,3 +16,16 @@ Para obtener ids de compranets con expedientes vacíos
 ```sh
 ~/IRC/scraper/etl/empty data.json | tee empty.txt
 ```
+
+Para filtrar documentos sin una propiedad (i.e. supuestamente
+inválidos), p. ej. sin descripción.
+
+```sh
+~/IRC/scraper/etl/valid data.json > valid.json
+```
+
+Mezclar la lista de ids de faltantes y vacíos (sin duplicados).
+
+```sh
+sort missing.txt empty.txt | uniq > todo.txt
+```
