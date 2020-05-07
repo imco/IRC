@@ -9,7 +9,7 @@ AUTHOR = 'Raul Peralta'
 REQUIRED = [
     'pandas', 'numpy', 'dask',
     'matplotlib', 'seaborn', 'distributed',
-    'joblib', 'scikit-learn'
+    'joblib', 'scikit-learn', 'feather-format'
 ]
 
 setup(
