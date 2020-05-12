@@ -1,12 +1,16 @@
-# csv_to_parquet.py
+# csv_to_parquet.py <csv_file>
 # adaptado de https://stackoverflow.com/questions/26124417/how-to-convert-a-csv-file-to-parquet
 
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import sys
 
-csv_file = 'procedimientos.psv'
-parquet_file = 'procedimientos.parquet'
+csv_file = sys.argv[1]
+parquet_file = csv_file + ".parquet"
+print("Reading", csv_file)
+print("Writing", parquet_file)
+
 chunksize = 100_000
 
 csv_stream = pd.read_csv(csv_file,
