@@ -56,6 +56,10 @@ Finalmente, instala el código de este proyecto con:
 $ pip install --editable .
 ```
 
+### Dependencias de sistema
+- python 3+
+- libsnappy
+
 ## Cómo crear las score cards
 Para generar los features debes de correr el código que está
 en la notebook [generacion_features.ipynb](https://github.com/opintel/como-identificar-focos-rojos-en-contrataciones-publicas/blob/master/notebooks/generacion_features.ipynb).

@@ -7,9 +7,17 @@ EMAIL = 'raul.peralta@opi.la'
 AUTHOR = 'Raul Peralta'
 
 REQUIRED = [
-    'pandas', 'numpy', 'dask',
-    'matplotlib', 'seaborn', 'distributed',
-    'joblib', 'scikit-learn', 'feather-format'
+    'dask',
+    'distributed',
+    'feather-format',
+    'joblib',
+    'matplotlib',
+    'numpy',
+    'pandas',
+    'python-snappy',
+    'scikit-learn',
+    'seaborn',
+    'snappy'
 ]
 
 setup(
