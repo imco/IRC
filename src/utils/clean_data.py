@@ -1,6 +1,7 @@
 import os
 import re
 import pandas as pd
+import numpy as np
 from currency_converter import CurrencyConverter
 from joblib import Parallel, delayed
 from typing import Set, List
@@ -28,6 +29,56 @@ REGEX_LIST = [
     # SC DE C DE RL DE CV
     '[S]\s?[C]\s+[D]\s?[E]\s+[C]\s+[D]\s?[E]\s+[R]\s?[L]\s+[D]\s?[E]\s+[C]\s?[V]',
 ]
+
+
+# Mapping de columnas 2018 a 2012
+# Las comentadas son columnas no encontradas en la versión previa (2012-2017)
+COLUMN_MAPPING = {
+    'Orden de gobierno': 'GOBIERNO',
+    'Siglas de la Institución': 'SIGLAS',
+    'Institución': 'DEPENDENCIA',
+    'Clave de la UC': 'CLAVEUC',
+    'Nombre de la UC': 'NOMBRE_DE_LA_UC',
+    'Responsable de la UC': 'RESPONSABLE',
+    'Código del expediente': 'CODIGO_EXPEDIENTE',
+    # 'Referencia del expediente': '',
+    # 'Clave CUCOP': '',
+    'Título del expediente': 'TITULO_EXPEDIENTE',
+    'Plantilla del expediente': 'PLANTILLA_EXPEDIENTE',
+    # 'Fundamento legal': '',
+    'Número del procedimiento': 'NUMERO_PROCEDIMIENTO',
+    'Fecha de fallo': 'EXP_F_FALLO',
+    'Fecha de publicación': 'PROC_F_PUBLICACION',
+    'Fecha de apertura': 'FECHA_APERTURA_PROPOSICIONES',
+    'Carácter del procedimiento': 'CARACTER',
+    'Tipo de contratación': 'TIPO_CONTRATACION',
+    'Tipo de procedimiento': 'TIPO_PROCEDIMIENTO',
+    'Forma de participación': 'FORMA_PROCEDIMIENTO',
+    'Código del contrato': 'CODIGO_CONTRATO',
+    # 'Núm. de control del contrato': '',
+    'Título del contrato': 'TITULO_CONTRATO',
+    'Fecha de inicio del contrato': 'FECHA_INICIO',
+    'Fecha de fin del contrato': 'FECHA_FIN',
+    'Importe del contrato': 'IMPORTE_CONTRATO',
+    'Moneda del contrato': 'MONEDA',
+    'Estatus del contrato': 'ESTATUS_CONTRATO',
+    'Convenio modificatorio': 'CONVENIO_MODIFICATORIO',
+    'Clave del programa federal': 'CLAVE_PROGRAMA',
+    'Fecha de firma del contrato': 'FECHA_CELEBRACION',
+    'Contrato marco': 'IDENTIFICADOR_CM',
+    'Compra consolidada': 'COMPRA_CONSOLIDADA',
+    'Contrato plurianual': 'PLURIANUAL',
+    'Clave de cartera SHCP': 'CLAVE_CARTERA_SHCP',
+    'Folio en el RUPC': 'FOLIO_RUPC',
+    # 'RFC': '',
+    'Proveedor o contratista': 'PROVEEDOR_CONTRATISTA',
+    'Estratificación de la empresa': 'ESTRATIFICACION_MPC',
+    'Clave del país de la empresa': 'SIGLAS_PAIS',
+    # 'RFC verificado en el SAT': '',
+    'Crédito externo': 'C_EXTERNO',
+    'Organismo financiero': 'ORGANISMO',
+    'Dirección del anuncio': 'ANUNCIO'
+}
 
 
 def find_numbers(string):
@@ -119,14 +170,27 @@ def convert_to_mxn(converter, montos, monedas, fechas) -> List[float]:
 
 
 def procesar_archivo_procedimientos(file: str, year: int):
-    df = pd.read_excel(file,
-                       dtype={
-                           'CLAVEUC': str, 'FOLIO_RUPC': str,
-                           'CODIGO_CONTRATO': str,
-                           'CODIGO_EXPEDIENTE': str,
-                           'IMPORTE_CONTRATO': float,
-                           'APORTACION_FEDERAL': float
-                       })
+    df = pd.read_excel(file, dtype=str)
+
+    if year >= 2018:
+        # Para procesar archivos de nueva generación
+        # vamos a renombrar las columnas para que
+        # correspondan a la versión anterior.
+        # Hay algunas columnas que tendremos que rellenar
+        # dado que no existen en formatos recientes
+        # de Compranet.
+        df.rename(columns=COLUMN_MAPPING, inplace=True)
+        df['APORTACION_FEDERAL'] = np.nan
+        df['ARCHIVADO'] = -1
+        df['CONTRATO_MARCO'] = df['IDENTIFICADOR_CM'].astype(bool)
+        df['CUENTA_ADMINISTRADA_POR'] = 'N/A'
+        df['ESTATUS_EMPRESA'] = 'N/A'
+        df['ESTRATIFICACION_MUC'] = df['ESTRATIFICACION_MPC']
+        df['RAMO'] = ''
+
+    df['IMPORTE_CONTRATO'] = df['IMPORTE_CONTRATO'].astype(float)
+    df['APORTACION_FEDERAL'] = df['APORTACION_FEDERAL'].astype(float)
+
     df = df.assign(
         PROC_F_PUBLICACION=pd.to_datetime(df.PROC_F_PUBLICACION,
                                           yearfirst=True),
