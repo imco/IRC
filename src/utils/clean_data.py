@@ -191,15 +191,15 @@ def procesar_archivo_procedimientos(file: str, year: int):
     df['IMPORTE_CONTRATO'] = df['IMPORTE_CONTRATO'].astype(float)
     df['APORTACION_FEDERAL'] = df['APORTACION_FEDERAL'].astype(float)
 
+    # Las bases del 2019 traen algunas fechas como un espacio, i.e. ' '.
+    # Tenemos que usar 'coerce' para permitir a pandas convertirlas en NaT
     df = df.assign(
-        PROC_F_PUBLICACION=pd.to_datetime(df.PROC_F_PUBLICACION,
-                                          yearfirst=True),
-        FECHA_APERTURA_PROPOSICIONES=pd.to_datetime(
-            df.FECHA_APERTURA_PROPOSICIONES, yearfirst=True),
-        EXP_F_FALLO=pd.to_datetime(df.EXP_F_FALLO, yearfirst=True),
-        FECHA_CELEBRACION=pd.to_datetime(df.FECHA_CELEBRACION, yearfirst=True),
-        FECHA_INICIO=pd.to_datetime(df.FECHA_INICIO, yearfirst=True),
-        FECHA_FIN=pd.to_datetime(df.FECHA_FIN, yearfirst=True),
+        PROC_F_PUBLICACION=pd.to_datetime(df.PROC_F_PUBLICACION, yearfirst=True, errors='coerce'),
+        FECHA_APERTURA_PROPOSICIONES=pd.to_datetime(df.FECHA_APERTURA_PROPOSICIONES, yearfirst=True, errors='coerce'),
+        EXP_F_FALLO=pd.to_datetime(df.EXP_F_FALLO, yearfirst=True, errors='coerce'),
+        FECHA_CELEBRACION=pd.to_datetime(df.FECHA_CELEBRACION, yearfirst=True, errors='coerce'),
+        FECHA_INICIO=pd.to_datetime(df.FECHA_INICIO, yearfirst=True, errors='coerce'),
+        FECHA_FIN=pd.to_datetime(df.FECHA_FIN, yearfirst=True, errors='coerce'),
         FECHA_ARCHIVO=year
     )
     cols = [
