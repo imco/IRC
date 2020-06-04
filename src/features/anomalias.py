@@ -107,9 +107,11 @@ def pc_contratos_con_convenio(df: DataFrame, **kwargs) -> DataFrame:
          'PROVEEDOR_CONTRATISTA', 'NUMERO_PROCEDIMIENTO',
          'CODIGO_CONTRATO', 'CONVENIO_MODIFICATORIO'],
         as_index=False).IMPORTE_PESOS.sum()
+
     contratos_total = monto_por_contrato.groupby(
         ['CLAVEUC', 'NUMERO_PROCEDIMIENTO',
          'CONVENIO_MODIFICATORIO']).CODIGO_CONTRATO.nunique()
+
     contratos_total = contratos_total.reset_index()
     contratos_total = contratos_total.groupby(
         ['CLAVEUC', 'CONVENIO_MODIFICATORIO'],
@@ -117,6 +119,7 @@ def pc_contratos_con_convenio(df: DataFrame, **kwargs) -> DataFrame:
     contratos_total = contratos_total.pivot(index='CLAVEUC',
         columns='CONVENIO_MODIFICATORIO', values='CODIGO_CONTRATO')
     contratos_total = contratos_total.fillna(0)
+
     num_contratos = contratos_total.sum(axis=1)
     # TODO: cambiar toda esta parte, el nombre final es otro
     contratos_total = contratos_total.rename(
@@ -125,14 +128,19 @@ def pc_contratos_con_convenio(df: DataFrame, **kwargs) -> DataFrame:
             for c in contratos_total.columns
         }
     )
+
     contratos_total = contratos_total * 100
     contratos_total = contratos_total.divide(num_contratos, axis='index')
+
+    # 2013 parece que no trae convenios así que llenamos una columna con ceros.
+    if 'pc_contratos_convenio_si' not in contratos_total.columns:
+        contratos_total['pc_contratos_convenio_si'] = 0
+
     contratos_total.columns.name = ''
     contratos_total = contratos_total.reset_index()
     contratos_total = contratos_total.rename(
         columns={'pc_contratos_convenio_si': 'pc_contratos_con_convenio'})
-    df_feature = contratos_total.loc[
-                 :, ['CLAVEUC', 'pc_contratos_con_convenio']]
+    df_feature = contratos_total.loc[:, ['CLAVEUC', 'pc_contratos_con_convenio']]
     return df_feature
 
 
