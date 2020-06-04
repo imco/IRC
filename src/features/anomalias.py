@@ -332,13 +332,18 @@ def pc_estratificacion_mal_reportada(df: DataFrame,
 def pc_adj_directas_excedieron_monto(df: DataFrame,
                                      df_maximos: DataFrame,
                                      **kwargs) -> DataFrame:
-    # df > df_procs_<tipo>
-    # df_maximos es tipos maximos
     if 'tipo_contratacion' in kwargs:
         tipo_contratacion = kwargs['tipo_contratacion']
     else:
         raise TypeError('Falta especificar tipo_contratacion')
-    años_validos = set(range(2012, 2017))
+
+    if 'year' in kwargs:
+        años_validos = set([kwargs['year']])
+    else:
+        años_validos = set(range(2012, 2017))
+
+    # df > df_procs_<tipo>
+    # df_maximos es tipos maximos
     df_maximos = df_maximos.loc[
         (df_maximos.Año.isin(años_validos)) &
         (df_maximos['Tipo de contratación'] == tipo_contratacion)
@@ -398,13 +403,18 @@ def pc_adj_directas_excedieron_monto(df: DataFrame,
 def pc_invitaciones_excedieron_monto(df: DataFrame,
                                      df_maximos: DataFrame,
                                      **kwargs) -> DataFrame:
-    # df > df_procs_<tipo>
-    # df_maximos es tipos maximos
     if 'tipo_contratacion' in kwargs:
         tipo_contratacion = kwargs['tipo_contratacion']
     else:
         raise TypeError('Falta especificar tipo_contratacion')
-    años_validos = set(range(2012, 2017))
+
+    if 'year' in kwargs:
+        años_validos = set([kwargs['year']])
+    else:
+        años_validos = set(range(2012, 2017))
+
+    # df > df_procs_<tipo>
+    # df_maximos es tipos maximos
     df_maximos = df_maximos.loc[
         (df_maximos.Año.isin(años_validos)) &
         (df_maximos['Tipo de contratación'] == tipo_contratacion)
