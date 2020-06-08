@@ -525,8 +525,16 @@ def pc_procs_con_provs_faltantes(df_proc: DataFrame,
                                   .agg({'PROVEEDOR_CONTRATISTA': lambda x: set(x)})
                                   .reset_index()
                                   .rename(columns={'PROVEEDOR_CONTRATISTA': 'proveedores_part'}))
-    df_final = pd.merge(df_proveedores_proc, df_proveedores_part,
-                        on=['CLAVEUC', 'NUMERO_PROCEDIMIENTO'], how='left')
+
+    # P. ej. en 2012 no hay OBRA PUBLICA en df_participantes
+    if not df_part.empty:
+        df_final = pd.merge(df_proveedores_proc, df_proveedores_part,
+                            on=['CLAVEUC', 'NUMERO_PROCEDIMIENTO'], how='left')
+    else:
+        df_final = df_proveedores_proc
+        df_final["proveedores_part"] = ""
+
+
     num_procs = (df_final.groupby('CLAVEUC', as_index=False)
                          .NUMERO_PROCEDIMIENTO.count()
                          .rename(columns={'NUMERO_PROCEDIMIENTO': 'num_procs'}))
