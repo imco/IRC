@@ -500,7 +500,7 @@ def pc_inconsistencias_en_monto(df_proc: DataFrame,
 
 def pc_procs_con_provs_faltantes(df_proc: DataFrame,
                                  df_part: DataFrame) -> DataFrame:
-    """Usa tabla de proc y participantes. Obtiene el porcetnaje de
+    """Usa tabla de proc y participantes. Obtiene el porcentaje de
     proveedores que aparecen en participantes pero no en
     procedimientos"""
     col_interes = [
@@ -530,7 +530,8 @@ def pc_procs_con_provs_faltantes(df_proc: DataFrame,
     num_procs = (df_final.groupby('CLAVEUC', as_index=False)
                          .NUMERO_PROCEDIMIENTO.count()
                          .rename(columns={'NUMERO_PROCEDIMIENTO': 'num_procs'}))
-    # TODO: llenar los proveedores que faltan en participantes con la de procedimeintos
+
+    # TODO: llenar los proveedores que faltan en participantes con la de procedimientos
     proveedores_part = df_final.proveedores_part.mask(
         df_final.proveedores_part.isnull(), df_final.proveedores_proc
     )
