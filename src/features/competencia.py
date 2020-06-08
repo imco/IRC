@@ -423,7 +423,7 @@ def pc_licitaciones_con_un_participante(df: DataFrame,
     df = (df * 100).divide(df.sum(axis=1), axis='index')
     df = df.rename(columns={1: col_name})
     if col_name not in df.columns:
-        df = df.assign(col_name=0)
+        df = df.assign(pc_licitaciones_con_un_participante=0)
     df = df.reset_index()
     # left join
     df_feature = pd.merge(df_feature, df.loc[:, ['CLAVEUC', col_name]],
