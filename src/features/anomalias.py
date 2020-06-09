@@ -229,6 +229,10 @@ def pc_licitaciones_internacionales_menor_20_dias(df: DataFrame,
                    columns='licitaciones_menor_20',
                    values='NUMERO_PROCEDIMIENTO')
             .rename(columns={True: 'pc_licitaciones_menor_20'}))
+
+    if 'pc_licitaciones_menor_20' not in df.columns:
+        df['pc_licitaciones_menor_20'] = 0
+
     valor_pc = (df.pc_licitaciones_menor_20 * 100).divide(df.sum(axis=1))
     df = (df.assign(pc_licitaciones_menor_20=valor_pc.fillna(0))
             .reset_index()
