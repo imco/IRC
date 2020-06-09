@@ -309,7 +309,7 @@ def pc_adjudicaciones_incompletas(df: DataFrame,
     tipos_validos = {'ADJUDICACION DIRECTA', }
     df = df.loc[df.TIPO_PROCEDIMIENTO.isin(tipos_validos)].copy()
     df = df.reset_index(drop=True)
-    # Archvios
+    # Archivos
     archivos = ['archivo_contrato', ]
     df = df.assign(
         suma_archivos=lambda dataframe: dataframe[archivos].sum(axis=1))
@@ -394,8 +394,11 @@ def pc_invitaciones_incompletas(df: DataFrame, **kwargs) -> DataFrame:
                                    values='CODIGO_EXPEDIENTE')
                             .fillna(0))
 
-    if len(archivos) not in df_feature.columns:
-        raise ValueError('Nadie tuvo los archivos completos')
+    for i in range(len(archivos) + 1):
+        if i not in df_feature.columns:
+            # Nadie tuvo los archivos completos
+            df_feature[i] = 0
+
     df_feature = (df_feature * 100).divide(df_feature.sum(axis=1), axis=0)
     df_feature = df_feature.assign(
         pc_invitaciones_incompletas=df_feature.drop(
