@@ -284,8 +284,11 @@ def id_por_monto(df, **kwargs) -> DataFrame:
 
 
 def tendencia_adjudicacion_directa(df: DataFrame, **kwargs) -> DataFrame:
-    """Usa la tabla de procedimientos. Calcula el incremento en el
-    porcentaje de adjudicaciones directas que da la UC"""
+    """
+    Usa la tabla de procedimientos. Calcula el incremento en el
+    porcentaje de adjudicaciones directas que da la UC.
+    Se calcula hasta el año indicado.
+    """
     # TODO: falta poner pruebas a _estimat_pendiente
     def _estimar_pendiente(row):
         y = row.values.reshape(-1, 1)
@@ -295,23 +298,36 @@ def tendencia_adjudicacion_directa(df: DataFrame, **kwargs) -> DataFrame:
         model.fit(x, y)
         pendiente = model.coef_.flatten()[0]
         return pendiente
+
     if df.shape[0] == 0:
         return None
+
+    if 'year' in kwargs:
+        year = kwargs['year']
+    else:
+        year = 1e5
+
     df = df.copy()
     adjudicacion_directa = df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA'
     df = df.assign(
         adjudicacion_directa=adjudicacion_directa
     )
     cols = [
-        'CLAVEUC', 'FECHA_INICIO',
+        'CLAVEUC',
+        'FECHA_INICIO',
         'NUMERO_PROCEDIMIENTO',
         'TIPO_PROCEDIMIENTO',
         'adjudicacion_directa'
     ]
     df = (df.loc[:, cols]
           .drop_duplicates()
-          .assign(Year=df.FECHA_INICIO.dt.year)
-          .drop('FECHA_INICIO', axis=1)
+          .assign(Year=df.FECHA_INICIO.dt.year))
+
+    # Filtra el dataframe hasta el año indicado
+    df = df[df['Year'] <= year]
+
+    # Contabiliza adjudicaciones directas por UC y año
+    df = (df.drop('FECHA_INICIO', axis=1)
           .groupby(['CLAVEUC', 'Year', 'adjudicacion_directa'])
           .NUMERO_PROCEDIMIENTO.nunique()
           .reset_index()
@@ -322,6 +338,7 @@ def tendencia_adjudicacion_directa(df: DataFrame, **kwargs) -> DataFrame:
           .reset_index()
           .rename(columns={True: 'num_adj_si',
                            False: 'num_adj_no'}))
+
     total = df[['num_adj_no', 'num_adj_si']].sum(axis=1)
     df = df.assign(
         pc_adjudicacion=(df.num_adj_si.divide(total) * 100)
@@ -329,7 +346,6 @@ def tendencia_adjudicacion_directa(df: DataFrame, **kwargs) -> DataFrame:
     df = (df.pivot(index='CLAVEUC',
                    columns='Year',
                    values='pc_adjudicacion')
-          .drop(2017, axis=1)
           .fillna(0))
 
     df = df.assign(
