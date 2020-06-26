@@ -11,8 +11,12 @@ DataFrame = pd.DataFrame
 
 def porcentaje_procs_presenciales(df: DataFrame,
                                   **kwargs) -> DataFrame:
-    """Usa tabla de procedimientos. Calcula el porcentaje de
-    procedimientos presenciales"""
+    """
+    Usa tabla de procedimientos. Calcula el porcentaje de
+    procedimientos presenciales
+    Indicador:
+        Porcentaje de procedimientos presenciales
+    """
     df = df.assign(
         FORMA_PROCEDIMIENTO=df.FORMA_PROCEDIMIENTO.fillna('NO REPORTADA')
     )
@@ -68,8 +72,12 @@ def contratos_promedio_por_procedimimento(df: DataFrame,
 def promedio_datos_faltantes_por_contrato(df: DataFrame,
                                           cols=None,
                                           **kwargs) -> DataFrame:
-    """Promedio de datos fatantes por contrato en la UC. Los datos
-    son los que están en el parámetro 'cols' y de la tabla de procs."""
+    """
+    Promedio de datos fatantes por contrato en la UC. Los datos
+    son los que están en el parámetro 'cols' y de la tabla de procs.
+    Indicador:
+        Datos faltantes en la base de Compranet (procedimientos de contratación)
+    """
     cols_id = [
         'DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
         'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'
@@ -106,8 +114,12 @@ def promedio_datos_faltantes_por_contrato(df: DataFrame,
 
 
 def pc_procs_sin_contrato(df: DataFrame, **kwargs) -> DataFrame:
-    """Usa tabla scraper. Calcula el porcentaje de procedimientos
-    sin archivo de contrato"""
+    """
+    Usa tabla scraper. Calcula el porcentaje de procedimientos
+    sin archivo de contrato
+    Indicador:
+        Porcentaje de procedimientos sin contrato publicado
+    """
     df_claves = pd.DataFrame(
         data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     col_interes = 'archivo_contrato'
@@ -136,9 +148,13 @@ def pc_procs_sin_contrato(df: DataFrame, **kwargs) -> DataFrame:
 def pc_procs_sin_fallo(df: DataFrame,
                        tipos_validos=None,
                        **kwargs) -> DataFrame:
-    """Usa tabla scraper.
+    """
+    Usa tabla scraper.
     Calcula el porcentaje de procedimientos sin archivo de
-    fallo"""
+    fallo
+    Indicador:
+        Porcentaje de procedimientos sin fallo publicado
+    """
     if tipos_validos is None:
         # solo aplica para INV a 3 y Licitaciones publicas
         tipos_validos = {
@@ -173,9 +189,13 @@ def pc_procs_sin_fallo(df: DataFrame,
 def pc_procs_sin_apertura(df: DataFrame,
                           tipos_validos=None,
                           **kwargs) -> DataFrame:
-    """Usa tabla scraper.
+    """
+    Usa tabla scraper.
     Calcula el porcentaje de procedimientos sin archivo de
-    apertura de proposiciones"""
+    apertura de proposiciones
+    Indicador:
+        Porcentaje de procedimientos sin apertura de proposiciones
+    """
     if tipos_validos is None:
         # solo aplica para INV a 3 y Licitaciones publicas
         tipos_validos = {
@@ -208,8 +228,12 @@ def pc_procs_sin_apertura(df: DataFrame,
 
 
 def pc_procs_sin_archivos(df: DataFrame, **kwargs) -> DataFrame:
-    """Usa tabla scraper.
-    Se calcula el porcentaje de procedimientos sin archivos por UC"""
+    """
+    Usa tabla scraper.
+    Se calcula el porcentaje de procedimientos sin archivos por UC
+    Indicador:
+        Porcentaje de procedimiento sin ningún anexo
+    """
     df_feature = (df.groupby(['CLAVEUC', 'numero_archivos'],
                              as_index=False).CODIGO_EXPEDIENTE.count()
                     .pivot(index='CLAVEUC', columns='numero_archivos',
@@ -247,6 +271,8 @@ def tendencia_no_publicacion_contratos(df: DataFrame,
     """
     Usa la tabla del scraper. Calcula el decremento
     en publicación de contratos hasta el año indicado.
+    Indicador:
+        Diferencia entre el porcentaje de contratos públicados en 2016 vs 2012-2013
     """
     def _estimar_pendiente(row):
         # TODO: filtrar nans
@@ -314,9 +340,13 @@ def tendencia_no_publicacion_contratos(df: DataFrame,
 
 def pc_adjudicaciones_incompletas(df: DataFrame,
                                   **kwargs) -> DataFrame:
-    """Usa tabla scraper.
+    """
+    Usa tabla scraper.
     Calcula el porcentaje de procedimientos (adjudicaciones directas)
-    con documentacion incompleta"""
+    con documentacion incompleta
+    Indicador:
+        Porcentaje de AD que no cumplen con contrato publicado
+    """
     df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     tipos_validos = {'ADJUDICACION DIRECTA', }
     df = df.loc[df.TIPO_PROCEDIMIENTO.isin(tipos_validos)].copy()
@@ -350,9 +380,13 @@ def pc_adjudicaciones_incompletas(df: DataFrame,
 def pc_procs_sin_junta_aclaracion(df: DataFrame,
                                   tipos_validos=None,
                                   **kwargs) -> DataFrame:
-    """Usa tabla scraper.
+    """
+    Usa tabla scraper.
     Calcula el porcentaje de procedimientos sin archivo de
-    junta de aclaraciones"""
+    junta de aclaraciones
+    Indicador:
+        Porcentaje de procedimientos sin junta de aclaraciones
+    """
     if tipos_validos is None:
         # solo aplica para Licitaciones publicas
         tipos_validos = {
@@ -384,9 +418,13 @@ def pc_procs_sin_junta_aclaracion(df: DataFrame,
 
 
 def pc_invitaciones_incompletas(df: DataFrame, **kwargs) -> DataFrame:
-    """Usa tabla scraper.
+    """
+    Usa tabla scraper.
     Calcula el porcentaje de procedimientos (inv a 3)
-    con documentacion incompleta"""
+    con documentacion incompleta
+    Indicador:
+        Porcentaje de INV3 que no cumplen con convocatoria, la apertura de propuestase, el fallo y el contrato.
+    """
     df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     tipos_validos = {'INVITACION A CUANDO MENOS TRES', }
     df = df.loc[df.TIPO_PROCEDIMIENTO.isin(tipos_validos)].copy()
@@ -425,9 +463,13 @@ def pc_invitaciones_incompletas(df: DataFrame, **kwargs) -> DataFrame:
 
 def pc_licitaciones_incompletas(df: DataFrame,
                                 **kwargs) -> DataFrame:
-    """Usa tabla scraper.
+    """
+    Usa tabla scraper.
     Calcula el porcentaje de procedimientos (licitaciones publicas)
-    con documentacion incompleta"""
+    con documentacion incompleta
+    Indicador:
+        Porcentaje de licitaciones que no cumplen con convocatoria, junta de aclaraciones, apertura de propuestas, fallo y contrato
+    """
     df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     tipos_validos = {'LICITACION PUBLICA', 'LICITACION PUBLICA CON OSD'}
     df = df.loc[df.TIPO_PROCEDIMIENTO.isin(tipos_validos)].copy()
@@ -465,9 +507,13 @@ def pc_licitaciones_incompletas(df: DataFrame,
 def pc_inconsistencias_en_monto(df_proc: DataFrame,
                                 df_part: DataFrame,
                                 **kwargs) -> DataFrame:
-    """Usa tabla de proc y participantes. Obtiene el porcetnaje de
+    """
+    Usa tabla de proc y participantes. Obtiene el porcetnaje de
     procedimientos en donde el monto es diferente en participantes y
-    procedimientos"""
+    procedimientos
+    Indicador:
+        Porcentaje de inconsistencias en los montos reportados entre base pública y Compranet IM
+    """
     df_proc: DataFrame = df_proc.copy()
     df_part: DataFrame = df_part.copy()
     # Calcular el monto de los ganadores en participantes
@@ -515,9 +561,13 @@ def pc_inconsistencias_en_monto(df_proc: DataFrame,
 
 def pc_procs_con_provs_faltantes(df_proc: DataFrame,
                                  df_part: DataFrame) -> DataFrame:
-    """Usa tabla de proc y participantes. Obtiene el porcentaje de
+    """
+    Usa tabla de proc y participantes. Obtiene el porcentaje de
     proveedores que aparecen en participantes pero no en
-    procedimientos"""
+    procedimientos
+    Indicador:
+        Porcentaje de procedimientos en la base pública de contratos en donde no se reportan a todos los ganadores.
+    """
     col_interes = [
         'CLAVEUC', 'NUMERO_PROCEDIMIENTO', 'PROVEEDOR_CONTRATISTA']
     df_proc: DataFrame = (df_proc.copy().loc[:, col_interes])

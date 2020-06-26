@@ -13,8 +13,11 @@ DataFrame = pd.DataFrame
 
 
 def contratos_por_proveedor(df: DataFrame, **kwargs) -> DataFrame:
-    """Por cada unidad compradora calcula el número de contratos
+    """
+    Por cada unidad compradora calcula el número de contratos
     por proveedor diferente
+    Indicador:
+        Número de participantes distintos por cada 100 procedimientos.
     """
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
@@ -54,9 +57,13 @@ def contratos_por_proveedor(df: DataFrame, **kwargs) -> DataFrame:
 
 def pc_procedimientos_adj_directa_inv3(df: DataFrame,
                                        **kwargs) -> DataFrame:
-    """De la tabla de procedimientos. Por cada unidad compradora
+    """
+    De la tabla de procedimientos. Por cada unidad compradora
     calcula el porcentaje de procedimientos por
-    adj directa e invitacion a 3)"""
+    adj directa e invitacion a 3)
+    Indicador:
+        Porcentaje de procedimientos que utilizaron adjudicación directa o INV3.
+    """
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
@@ -92,8 +99,12 @@ def pc_procedimientos_adj_directa_inv3(df: DataFrame,
 
 
 def pc_monto_adj_directa_inv3(df: DataFrame, **kwargs) -> DataFrame:
-    """Por cada unidad compradora calcula el porcentaje
-    del monto que da por adj directa e invitacion a 3)"""
+    """
+    Por cada unidad compradora calcula el porcentaje
+    del monto que da por adj directa e invitacion a 3)
+    Indicador:
+        Porcentaje del monto adjudicado por adjudicación directa o INV3.
+    """
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
@@ -129,7 +140,11 @@ def pc_monto_adj_directa_inv3(df: DataFrame, **kwargs) -> DataFrame:
 
 
 def importe_promedio_por_contrato(df: DataFrame, **kwargs) -> DataFrame:
-    """Calcula el monto promedio que se da por contrato"""
+    """
+    Calcula el monto promedio que se da por contrato
+    Indicador:
+        Promedio del importe por contrato adjudicado.
+    """
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
@@ -196,7 +211,11 @@ def _calcular_ihh_contratos(df: DataFrame) -> DataFrame:
 
 
 def ihh_por_contratos(df: DataFrame, **kwargs) -> DataFrame:
-    """Indice de Herfindahl e Hirschman"""
+    """
+    Indice de Herfindahl e Hirschman
+    Indicador:
+        IHH por número de contratos (Índice Herfindahl-Hirschman)
+    """
     contratos_uc_poc = _calcular_ihh_contratos(df)
     # IHH por uc
     uc_IHH = contratos_uc_poc.groupby(
@@ -207,7 +226,11 @@ def ihh_por_contratos(df: DataFrame, **kwargs) -> DataFrame:
 
 
 def id_por_contratos(df: DataFrame, **kwargs) -> DataFrame:
-    """Tabla de procedimientos"""
+    """
+    Tabla de procedimientos
+    Indicador:
+        ID por número de contratos (Índice de dominación)
+    """
     contratos_uc_poc = _calcular_ihh_contratos(df)
     uc_IHH = contratos_uc_poc.groupby(
         'CLAVEUC', as_index=False).IHH_contratos.sum()
@@ -255,6 +278,10 @@ def _calcular_ihh_monto(df: DataFrame) -> DataFrame:
 
 
 def ihh_por_monto(df: DataFrame, **kwargs) -> DataFrame:
+    """
+    Indicador:
+        IHH por monto
+    """
     monto_uc_poc = _calcular_ihh_monto(df)
     uc_IHH = monto_uc_poc.groupby(
         'CLAVEUC', as_index=False).IHH_monto.sum()
@@ -263,6 +290,10 @@ def ihh_por_monto(df: DataFrame, **kwargs) -> DataFrame:
 
 
 def id_por_monto(df, **kwargs) -> DataFrame:
+    """
+    Indicador:
+        ID por monto
+    """
     monto_uc_poc = _calcular_ihh_monto(df)
     uc_IHH = monto_uc_poc.groupby(
         'CLAVEUC', as_index=False).IHH_monto.sum()
@@ -288,6 +319,8 @@ def tendencia_adjudicacion_directa(df: DataFrame, **kwargs) -> DataFrame:
     Usa la tabla de procedimientos. Calcula el incremento en el
     porcentaje de adjudicaciones directas que da la UC.
     Se calcula hasta el año indicado.
+    Indicador:
+        Diferencia del porcentaje de procedimientos adjudicados directamente en 2012­-2013 y 2016.
     """
     # TODO: falta poner pruebas a _estimat_pendiente
     def _estimar_pendiente(row):
@@ -359,7 +392,11 @@ def tendencia_adjudicacion_directa(df: DataFrame, **kwargs) -> DataFrame:
 
 
 def c4_monto_total(df: DataFrame, **kwargs) -> DataFrame:
-    """Usa tabla de procedimientos"""
+    """
+    Usa tabla de procedimientos
+    Indicador:
+        Índice de concentración de las 4 empresas con más monto adjudicado.
+    """
     df: DataFrame = df.copy()
     monto_por_proc = df.groupby(
         ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'NUMERO_PROCEDIMIENTO'],
@@ -385,7 +422,11 @@ def c4_monto_total(df: DataFrame, **kwargs) -> DataFrame:
 
 
 def c4_num_procedimientos(df: DataFrame, **kwargs) -> DataFrame:
-    """ Usa la tabla de procedimientos"""
+    """
+    Usa la tabla de procedimientos
+    Indicador:
+        Índice de concentración de las 4 empresas con más procedimientos ganados.
+    """
     df: DataFrame = df.copy()
     procs_por_prov = df.groupby(
         ['CLAVEUC', 'PROVEEDOR_CONTRATISTA'],
@@ -413,8 +454,12 @@ def c4_num_procedimientos(df: DataFrame, **kwargs) -> DataFrame:
 
 def pc_licitaciones_con_un_participante(df: DataFrame,
                                         **kwargs) -> Optional[DataFrame]:
-    # usa tabla de participantes. Calcula el porcentaje de licitaciones e
-    # invitaciones a 3 con un solo participante
+    """
+    Usa tabla de participantes. Calcula el porcentaje de licitaciones e
+    invitaciones a 3 con un solo participante
+    Indicador:
+        Porcentaje de licitaciones e INV3 con solo un licitante
+    """
     if df.shape[0] == 0:
         return None
     df: DataFrame = df.copy()
@@ -449,8 +494,12 @@ def pc_licitaciones_con_un_participante(df: DataFrame,
 
 def procs_promedio_por_participantes(df: DataFrame,
                                      **kwargs) -> Optional[DataFrame]:
-    """Usa tabla participantes. Calcula cuantos procedimientos
-    en promedio se dan por participante"""
+    """
+    Usa tabla participantes. Calcula cuantos procedimientos
+    en promedio se dan por participante
+    Indicador:
+        Índice de participación
+    """
     if df.shape[0] == 0:
         return None
     df: DataFrame = df.copy()
@@ -466,7 +515,11 @@ def procs_promedio_por_participantes(df: DataFrame,
 
 def pc_partipaciones_promedio(df: DataFrame,
                               **kwargs) -> Optional[DataFrame]:
-    """Usa la tabla de participantes"""
+    """
+    Usa la tabla de participantes
+    Indicador:
+        Promedio de participantes por procedimiento
+    """
     if df.shape[0] == 0:
         return None
     df: DataFrame = df.copy()
@@ -492,7 +545,11 @@ def pc_partipaciones_promedio(df: DataFrame,
 
 def procs_por_participantes_unicos(df: DataFrame,
                                    **kwargs) -> Optional[DataFrame]:
-    """Usa la tabla de participantes"""
+    """
+    Usa la tabla de participantes
+    Indicador:
+        Número de empresas ganadoras diferentes por cada 100 contratos
+    """
     if df.shape[0] == 0:
         return None
     df = df.copy()
@@ -513,7 +570,11 @@ def procs_por_participantes_unicos(df: DataFrame,
 
 def disminucion_en_participacion(df: DataFrame,
                                  **kwargs) -> Optional[DataFrame]:
-    """Usa la tabla de participantes"""
+    """
+    Usa la tabla de participantes
+    Indicador:
+        Cambio en el promedio de participantes por procedimiento.
+    """
     def _estimar_pendiente(row):
         # TODO: falta filtrar por nans y poner tests
         y = row.values.reshape(-1, 1)

@@ -10,7 +10,11 @@ DataFrame = pd.DataFrame
 def monto_con_rfc_fantasma(df_procs: DataFrame,
                            df_rfc_fantasma: DataFrame,
                            **kwargs) -> DataFrame:
-    """Usa tabla de procedimientos y la RFCs (apocrifos)"""
+    """
+    Usa tabla de procedimientos y la RFCs (apocrifos)
+    Indicador:
+        Monto asignado a empresas fantasma.
+    """
     df_feature = pd.DataFrame(
         data=df_procs.CLAVEUC.unique(), columns=['CLAVEUC'])
     df = pd.merge(df_procs, df_rfc_fantasma,
@@ -57,7 +61,11 @@ def monto_con_rfc_fantasma(df_procs: DataFrame,
 def monto_con_sancionados(df_procs: DataFrame,
                           df_sancionados: DataFrame,
                           **kwargs) -> DataFrame:
-    """Usa tabla de procedimientos y la de sancionados"""
+    """
+    Usa tabla de procedimientos y la de sancionados
+    Indicador:
+        Monto asignado a empresas sancionadas.
+    """
     df_feature = pd.DataFrame(
         data=df_procs.CLAVEUC.unique(), columns=['CLAVEUC'])
     df = pd.merge(df_procs, df_sancionados,
@@ -101,7 +109,11 @@ def monto_con_sancionados(df_procs: DataFrame,
 
 
 def pc_contratos_con_convenio(df: DataFrame, **kwargs) -> DataFrame:
-    """Usa tabla de procedimientos"""
+    """
+    Usa tabla de procedimientos
+    Indicador:
+        Porcentaje de procedimientos con convenio modificatorio.
+    """
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC',
          'PROVEEDOR_CONTRATISTA', 'NUMERO_PROCEDIMIENTO',
@@ -146,9 +158,13 @@ def pc_contratos_con_convenio(df: DataFrame, **kwargs) -> DataFrame:
 
 def pc_licitaciones_nacionales_menor_15_dias(df: DataFrame,
                                              **kwargs) -> DataFrame:
-    """Porcentaje de licitaciones nacionales
+    """
+    Porcentaje de licitaciones nacionales
     cuyo plazo entre publicacion y apertura fue
-    menor a 15 días"""
+    menor a 15 días
+    Indicador:
+        Porcentaje de las licitaciones nacionales cuyo plazo fue menor a 15 días.
+    """
     df = df.copy()
     df_feature = pd.DataFrame(
         data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
@@ -196,9 +212,13 @@ def pc_licitaciones_nacionales_menor_15_dias(df: DataFrame,
 
 def pc_licitaciones_internacionales_menor_20_dias(df: DataFrame,
                                                   **kwargs) -> DataFrame:
-    """Porcentaje de licitaciones internacionales
+    """
+    Porcentaje de licitaciones internacionales
     cuyo plazo entre publicacion y apertura fue
-    menor a 20 días"""
+    menor a 20 días
+    Indicador:
+        Porcentaje de las licitaciones internacionales cuyo plazo fue menor a 20 días.
+    """
     df = df.copy()
     df_feature = pd.DataFrame(
         data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
@@ -251,9 +271,13 @@ def pc_licitaciones_internacionales_menor_20_dias(df: DataFrame,
 
 def pc_licitaciones_internacionales_menor_40_dias(df: DataFrame,
                                                   **kwargs) -> DataFrame:
-    """Porcentaje de licitaciones internacionales
+    """
+    Porcentaje de licitaciones internacionales
     bajo la cobertura de tratados cuyo plazo
-    entre publicacion y apertura fue menor a 40 días"""
+    entre publicacion y apertura fue menor a 40 días
+    Indicador:
+        Porcentaje de las licitaciones internacionales bajo la cobertura de tratados cuyo plazo fue menor a 40 días.
+    """
     df = df.copy()
     df_feature = pd.DataFrame(
         data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
@@ -306,6 +330,10 @@ def pc_licitaciones_internacionales_menor_40_dias(df: DataFrame,
 
 def pc_estratificacion_mal_reportada(df: DataFrame,
                                      **kwargs) -> DataFrame:
+    """
+    Indicador:
+        Estratificación de la empresa reportado por la UC y por la empresa no coinciden.
+    """
     df = df.copy()
     cols = [
         'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
@@ -340,6 +368,10 @@ def pc_estratificacion_mal_reportada(df: DataFrame,
 def pc_adj_directas_excedieron_monto(df: DataFrame,
                                      df_maximos: DataFrame,
                                      **kwargs) -> DataFrame:
+    """
+    Indicador:
+        % de las Adjudicaciones directas que rebasaron el máximo permitido.
+    """
     if 'tipo_contratacion' in kwargs:
         tipo_contratacion = kwargs['tipo_contratacion']
     else:
@@ -411,6 +443,10 @@ def pc_adj_directas_excedieron_monto(df: DataFrame,
 def pc_invitaciones_excedieron_monto(df: DataFrame,
                                      df_maximos: DataFrame,
                                      **kwargs) -> DataFrame:
+    """
+    Indicador:
+        % de las INV3 que rebasaron el máximo permitido.
+    """
     if 'tipo_contratacion' in kwargs:
         tipo_contratacion = kwargs['tipo_contratacion']
     else:
@@ -483,9 +519,13 @@ def pc_invitaciones_excedieron_monto(df: DataFrame,
 
 def promedio_convenios_por_proc(df: DataFrame,
                                 **kwargs) -> DataFrame:
-    """Usa tabla scraper.
+    """
+    Usa tabla scraper.
     Calcula el promedio de contratos modificatorios por
-    procedimiento"""
+    procedimiento
+    Indicador:
+        Promedio de convenios por procedimiento.
+    """
     df = df.copy()
     df_convenios_prom = (df.loc[df.numero_convenios > 0]
                            .groupby('CLAVEUC').numero_convenios.mean())
@@ -504,8 +544,12 @@ def promedio_convenios_por_proc(df: DataFrame,
 def pc_procs_sin_convocatoria(df: DataFrame,
                               tipos_validos=None,
                               **kwargs) -> DataFrame:
-    """Usa tabla scraper.
-    Calcula el porcentaje de procedimientos sin archivo de convocatoria"""
+    """
+    Usa tabla scraper.
+    Calcula el porcentaje de procedimientos sin archivo de convocatoria
+    Indicador:
+        Porcentaje de licitaciones e INV3 sin convocatoria.
+    """
     if tipos_validos is None:
         # solo aplica para INV a 3 y Licitaciones publicas
         tipos_validos = {
@@ -538,7 +582,11 @@ def pc_procs_sin_convocatoria(df: DataFrame,
 # Tabla de participantes
 
 def participantes_por_ganadores(df: DataFrame) -> DataFrame:
-    """Tabla de participantes. """
+    """
+    Tabla de participantes.
+    Indicador:
+        Número de participantes únicos divididos por el número de ganadores únicos.
+    """
     df = df.copy()
     # Se sacan los procedimientos que sí se realizaron
     df_participantes = df.loc[df.ESTATUS_FALLO == 'GANADOR']
