@@ -244,7 +244,10 @@ def promedio_procs_por_archivo(df: DataFrame, **kwargs) -> DataFrame:
 
 def tendencia_no_publicacion_contratos(df: DataFrame,
                                        **kwargs) -> DataFrame:
-    """Usa la tabla del scraper"""
+    """
+    Usa la tabla del scraper. Calcula el decremento
+    en publicación de contratos hasta el año indicado.
+    """
     def _estimar_pendiente(row):
         # TODO: filtrar nans
         y = row.values.reshape(-1, 1)
@@ -255,10 +258,20 @@ def tendencia_no_publicacion_contratos(df: DataFrame,
         pendiente *= -1
         return pendiente
 
+    if 'year' in kwargs:
+        year = kwargs['year']
+    else:
+        year = 1e5
+
     df = df.copy()
     df = df.assign(Year=df.FECHA_INICIO.dt.year)
+
+    # Filtra el dataframe hasta el año indicado
+    df = df[df['Year'] <= year]
+
     df_claves = pd.DataFrame(
         data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
+
     col_interes = 'archivo_contrato'
     df_feature = (df.groupby(['CLAVEUC', 'Year', col_interes])
                   .NUMERO_PROCEDIMIENTO.nunique()
@@ -281,7 +294,6 @@ def tendencia_no_publicacion_contratos(df: DataFrame,
                          columns='Year',
                          values='pc_con_contrato')
                   # .reset_index()
-                  .drop(2017, axis=1)
                   .fillna(100))
     df_feature = df_feature.assign(
         tendencia_no_publicacion_contratos=df_feature.apply(
