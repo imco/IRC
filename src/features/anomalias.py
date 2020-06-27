@@ -493,6 +493,11 @@ def pc_invitaciones_excedieron_monto(df: DataFrame,
                       .rename(columns={True: 'num_excedidas_si',
                                        False: 'num_excedidas_no'})
                       .fillna(0))
+
+    # Parece que en SERVICIOS 2019 no se encontró esta anomalía
+    if 'num_excedidas_si' not in monto_por_proc.columns:
+        monto_por_proc['num_excedidas_si'] = 0
+
     pc_inv3_excedidas = monto_por_proc.num_excedidas_si.divide(monto_por_proc.sum(axis=1))
     monto_por_proc = (monto_por_proc.assign(pc_inv3_excedidas=pc_inv3_excedidas * 100)
                       .reset_index()
