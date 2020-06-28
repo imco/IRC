@@ -268,7 +268,10 @@ def clean_base_sancionados(df: DataFrame) -> DataFrame:
     """Homologa los nombres de proveedores de la base de sancionados"""
     df = df.rename(
         columns={'Proveedor y Contratista ': 'PROVEEDOR_CONTRATISTA'})
-    df = df.assign(Multa=df.Multa.str.replace(',', '').astype(float))
+
+    if 'Multa' in df.columns:
+        df = df.assign(Multa=df.Multa.str.replace(',', '').astype(float))
+
     proveedor = (df.PROVEEDOR_CONTRATISTA
                    .str.normalize('NFD')
                    .str.encode('ascii', 'ignore')
