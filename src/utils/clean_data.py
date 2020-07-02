@@ -235,6 +235,62 @@ def procesar_archivo_procedimientos(file: str, year: int):
     return df
 
 
+def procesar_dataframe_sipot(df: DataFrame) -> DataFrame:
+    """
+    Rutinas de limpieza de archivos obtenidos de imco/sipot
+    - Pasa varios campos a mayúscula
+    - Remueve acentos
+    - Normaliza razones sociales
+    """
+    cols = [
+        'PROVEEDOR_CONTRATISTA',
+        'TIPO_CONTRATACION',
+        'TIPO_PROCEDIMIENTO'
+    ]
+
+    # Elimina caracteres no ascii
+    for col in cols:
+        df.loc[:, col] = (df[col]
+                          .str.normalize('NFD')
+                          .str.encode('ascii', 'ignore')
+                          .str.decode('utf-8')
+                          .str.upper()
+                          .str.replace('.', '')
+                          .str.replace(',', '')
+                          .str.strip())
+
+    # Estandariza TIPO_CONTRATACION
+    old_key = 'SERVICIOS RELACIONADOS CON OBRA PUBLICA'
+    new_key = 'SERVICIOS RELACIONADOS CON LA OP'
+    df.loc[:, 'TIPO_CONTRATACION'] = (df['TIPO_CONTRATACION']
+                                      .str.replace(old_key, new_key))
+    # Estandariza TIPO_PROCEDIMIENTO
+    old_key = 'INVITACION A CUANDO MENOS TRES PERSONAS'
+    new_key = 'INVITACION A CUANDO MENOS TRES'
+    df.loc[:, 'TIPO_PROCEDIMIENTO'] = (df['TIPO_PROCEDIMIENTO']
+                                       .str.replace(old_key, new_key))
+
+
+    df.loc[:, 'PROVEEDOR_CONTRATISTA'] = (df.PROVEEDOR_CONTRATISTA
+                                            .str.replace('"', '')
+                                            .str.replace("'", '')
+                                            .map(remove_double_white_space))
+
+    # Limpia sufijos comunes de razones sociales
+    for regex in REGEX_LIST:
+        pattern = re.compile(regex)
+        df = df.assign(
+                PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.map(
+                    lambda string: remove_pattern(string, pattern)
+                )
+        )
+
+    df = df.assign(PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.str.strip())
+    df.loc[:, 'NUMERO_PROCEDIMIENTO'] = df.NUMERO_PROCEDIMIENTO.str.upper()
+
+    return df
+
+
 def clean_base_rfc(df_rfc: DataFrame) -> DataFrame:
     """Homologa los nombres de proveedores de la base de RFC"""
     df_rfc = df_rfc.rename(
