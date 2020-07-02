@@ -235,13 +235,64 @@ def procesar_archivo_procedimientos(file: str, year: int):
     return df
 
 
-def procesar_dataframe_sipot(df: DataFrame) -> DataFrame:
+def procesar_dataframe_sipot(df: DataFrame, type: str) -> DataFrame:
     """
     Rutinas de limpieza de archivos obtenidos de imco/sipot
+    - Renombra las columnas
     - Pasa varios campos a mayúscula
     - Remueve acentos
     - Normaliza razones sociales
     """
+    # Elimina espacios alrededor de los nombres de columna
+    df.rename(columns={c: c.strip() for c in df.columns}, inplace=True)
+
+    col_mapping = None
+    if type == 'adjudicaciones':
+        col_mapping = {
+            'ID': 'SIPOT_ID',
+            'Ejercicio': 'EJERCICIO',
+            'Fecha de Inicio Del Periodo Que Se Informa': 'FECHA_INICIO',
+            'Tipo de Procedimiento (catálogo)': 'TIPO_PROCEDIMIENTO',
+            'Materia (catálogo)': 'TIPO_CONTRATACION',
+            'Número de Expediente, Folio O Nomenclatura Que Lo Identifique': 'NUMERO_PROCEDIMIENTO',
+            'Motivos Y Fundamentos Legales Aplicados para Realizar La Adjudicación Directa': 'MOTIVOS_ADJUDICACION',
+            'Hipervínculo a La Autorización Del Ejercicio de La Opción': 'LIGA_AUTORIZACION',
+            'Nombre Completo O Razón Social de Las Cotizaciones Consideradas Y Monto de Las Mismas (Tabla_334271)': 'REF_COTIZACIONES',
+            'Razón Social Del Adjudicado': 'PROVEEDOR_CONTRATISTA',
+            'Registro Federal de Contribuyentes (rfc) de La Persona Física O Moral Adjudicada': 'RFC_PROVEEDOR_CONTRATISTA',
+            'Número Que Identifique Al Contrato': 'CODIGO_EXPEDIENTE',
+            'Monto Total Del Contrato con Impuestos Incluidos (expresado en Pesos Mexicanos)': 'PRECIO_TOTAL',
+            'Hipervínculo Al Documento Del Contrato Y Anexos, Versión Pública Si Así Corresponde': 'LIGA_CONTRATO',
+            'Se Realizaron Convenios Modificatorios (catálogo)': 'CONVENIOS_MODIFICATORIOS',
+            'Datos de Los Convenios Modificatorios de La Contratación (Tabla_334268)': 'REF_CONVENIOS_MODIFICATORIOS'
+        }
+    elif type == 'licitaciones':
+        col_mapping = {
+            'ID': 'SIPOT_ID',
+            'Ejercicio': 'EJERCICIO',
+            'Fecha de Inicio Del Periodo Que Se Informa': 'FECHA_INICIO',
+            'Tipo de Procedimiento (catálogo)': 'TIPO_PROCEDIMIENTO',
+            'Materia (catálogo)': 'TIPO_CONTRATACION',
+            'Posibles Contratantes (Tabla_334277)': 'REF_CANDIDATOS',
+            'Número de Expediente, Folio O Nomenclatura': 'NUMERO_PROCEDIMIENTO',
+            'Hipervínculo a La Convocatoria O Invitaciones Emitidas': 'LIGA_CONVOCATORIA',
+            'Personas Físicas O Morales con Proposición U Oferta (Tabla_334306)': 'REF_OFERTAS',
+            'Hipervínculo Al Fallo de La Junta de Aclaraciones O Al Documento Correspondiente': 'LIGA_FALLO',
+            'Razón Social Del Contratista O Proveedor': 'PROVEEDOR_CONTRATISTA',
+            'Rfc de La Persona Física O Moral Contratista O Proveedor': 'RFC_PROVEEDOR_CONTRATISTA',
+            'Número Que Identifique Al Contrato': 'CODIGO_EXPEDIENTE',
+            'Monto Total Del Contrato con Impuestos Incluidos (mxn)': 'PRECIO_TOTAL',
+            'Hipervínculo Al Documento Del Contrato Y Anexos, en Versión Pública, en su Caso': 'LIGA_CONTRATO',
+            'Se Realizaron Convenios Modificatorios (catálogo)': 'CONVENIOS_MODIFICATORIOS',
+            'Convenios Modificatorios (Tabla_334310)': 'REF_CONVENIOS_MODIFICATORIOS',
+            'Hipervínculo Al Finiquito, en su  Caso': 'LIGA_FINIQUITO'
+        }
+
+    # Renombra las columnas, y reduce el dataframe a ese conjunto de datos
+    if col_mapping != None:
+        df.rename(columns=col_mapping, inplace=True)
+        df = df[col_mapping.values()]
+
     cols = [
         'PROVEEDOR_CONTRATISTA',
         'TIPO_CONTRATACION',
