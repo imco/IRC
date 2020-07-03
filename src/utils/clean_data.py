@@ -371,6 +371,30 @@ def clean_base_rfc(df_rfc: DataFrame) -> DataFrame:
     return df_rfc
 
 
+def clean_columna_proveedor(df: DataFrame) -> DataFrame:
+    """
+    Limpia PROVEEDOR_CONTRATISTA para facilitar cruces de info
+    - Remueve caracteres especiales
+    - Remueve terminaciones de razones sociales
+    """
+    df.loc[:, 'PROVEEDOR_CONTRATISTA'] = (df.PROVEEDOR_CONTRATISTA
+                                          .str.replace('"', '')
+                                          .str.replace("'", '')
+                                          .map(remove_double_white_space))
+
+    # Limpia sufijos comunes de razones sociales
+    for regex in REGEX_LIST:
+        pattern = re.compile(regex)
+        df = df.assign(
+            PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.map(
+                lambda string: remove_pattern(string, pattern)
+            )
+        )
+
+    df = df.assign(PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.str.strip())
+    return df
+
+
 def clean_base_sancionados(df: DataFrame) -> DataFrame:
     """Homologa los nombres de proveedores de la base de sancionados"""
     df = df.rename(
