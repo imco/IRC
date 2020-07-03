@@ -321,23 +321,40 @@ def procesar_dataframe_sipot(df: DataFrame, type: str) -> DataFrame:
     df.loc[:, 'TIPO_PROCEDIMIENTO'] = (df['TIPO_PROCEDIMIENTO']
                                        .str.replace(old_key, new_key))
 
-
-    df.loc[:, 'PROVEEDOR_CONTRATISTA'] = (df.PROVEEDOR_CONTRATISTA
-                                            .str.replace('"', '')
-                                            .str.replace("'", '')
-                                            .map(remove_double_white_space))
-
-    # Limpia sufijos comunes de razones sociales
-    for regex in REGEX_LIST:
-        pattern = re.compile(regex)
-        df = df.assign(
-                PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.map(
-                    lambda string: remove_pattern(string, pattern)
-                )
-        )
-
-    df = df.assign(PROVEEDOR_CONTRATISTA=df.PROVEEDOR_CONTRATISTA.str.strip())
+    df = clean_columna_proveedor(df)
     df.loc[:, 'NUMERO_PROCEDIMIENTO'] = df.NUMERO_PROCEDIMIENTO.str.upper()
+
+    return df
+
+
+def clean_base_ofertas(df: DataFrame) -> DataFrame:
+    """
+    Homologa tablas referenciadas extraídas de XLS y XLSX de SIPOT.
+    En este caso es para la tabla 334306 (ofertas)
+    - Renombra las columnas
+    - Pasa varios campos a mayúscula
+    - Remueve acentos
+    - Normaliza razones sociales
+    """
+    # Para el caso de las tablas extraídas de XLSX
+    if df.columns.size > 6:
+        # Borramos estas columnas porque no aparecen en las TABLAS de XLS (FECHA CREACION, FECHA MODIFICACION)
+        df.drop(columns=[1, 2], inplace=True)
+
+    assert(df.columns.size == 6)
+
+    col_persona = ['NOMBRE(S)', 'PRIMER APELLIDO', 'SEGUNDO APELLIDO']
+    col_names = ['ID'] + col_persona + ['PROVEEDOR_CONTRATISTA', 'RFC']
+
+    # Agregamos nombres de columna
+    df.columns = col_names
+
+    # Concatenamos el nombre
+    df.fillna('', inplace=True)
+    df['NOMBRE_COMPLETO'] = df[col_persona].agg(' '.join, axis=1).str.strip()
+    df.drop(columns=col_persona, inplace=True)
+
+    df = clean_columna_proveedor(df)
 
     return df
 
