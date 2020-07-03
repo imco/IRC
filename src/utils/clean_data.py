@@ -393,10 +393,12 @@ def clean_columna_proveedor(df: DataFrame) -> DataFrame:
     Limpia PROVEEDOR_CONTRATISTA para facilitar cruces de info
     - Remueve caracteres especiales
     - Remueve terminaciones de razones sociales
+    - Pasa a MAYÚSCULAS
     """
     df.loc[:, 'PROVEEDOR_CONTRATISTA'] = (df.PROVEEDOR_CONTRATISTA
                                           .str.replace('"', '')
                                           .str.replace("'", '')
+                                          .str.upper()
                                           .map(remove_double_white_space))
 
     # Limpia sufijos comunes de razones sociales
