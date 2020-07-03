@@ -327,6 +327,41 @@ def procesar_dataframe_sipot(df: DataFrame, type: str) -> DataFrame:
     return df
 
 
+def clean_base_cotizaciones(df: DataFrame) -> DataFrame:
+    """
+    Homologa tablas referenciadas extraídas de XLS y XLSX de SIPOT.
+    En este caso es para la tabla 334271 (cotizaciones)
+    - Renombra las columnas
+    - Pasa varios campos a mayúscula
+    - Remueve acentos
+    - Normaliza razones sociales
+    """
+    # Para el caso de las tablas extraídas de XLSX
+    if df.columns.size > 7:
+        # Borramos estas columnas porque no aparecen en las TABLAS de XLS (FECHA CREACION, FECHA MODIFICACION)
+        df.drop(columns=[1, 2], inplace=True)
+
+    assert(df.columns.size == 7)
+
+    col_persona = ['NOMBRE(S)', 'PRIMER APELLIDO', 'SEGUNDO APELLIDO']
+    col_names = ['ID'] + col_persona + ['PROVEEDOR_CONTRATISTA', 'RFC', 'MONTO_TOTAL']
+
+    # Agregamos nombres de columna
+    df.columns = col_names
+
+    df['MONTO_TOTAL'].replace('False', -1, inplace=True)
+    df.loc['MONTO_TOTAL'] = df['MONTO_TOTAL'].astype(float)
+
+    # Concatenamos el nombre
+    df.fillna('', inplace=True)
+    df['NOMBRE_COMPLETO'] = df[col_persona].agg(' '.join, axis=1).str.strip()
+    df.drop(columns=col_persona, inplace=True)
+
+    df = clean_columna_proveedor(df)
+
+    return df
+
+
 def clean_base_ofertas(df: DataFrame) -> DataFrame:
     """
     Homologa tablas referenciadas extraídas de XLS y XLSX de SIPOT.
