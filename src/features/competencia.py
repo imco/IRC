@@ -585,27 +585,41 @@ def disminucion_en_participacion(df: DataFrame,
         pendiente = model.coef_.flatten()[0]
         pendiente *= -1
         return pendiente
+
     if df.shape[0] == 0:
         return None
+
     df = df.copy()
     df = df.assign(
         Year=df.NUMERO_PROCEDIMIENTO.map(lambda x: int(x.split('-')[3]))
     )
+
+    # Filtra el dataframe hasta el año indicado
+    if 'year' in kwargs:
+        year = kwargs['year']
+    else:
+        year = 1e5
+
+    df = df[df['Year'] <= year]
+
     df = (df.groupby(['CLAVEUC', 'Year', 'NUMERO_PROCEDIMIENTO'])
             .PROVEEDOR_CONTRATISTA.nunique()
             .reset_index())
+
     df = df.groupby(
         ['CLAVEUC', 'Year'], as_index=False
     ).PROVEEDOR_CONTRATISTA.mean()
+
     df = (df.pivot(index='CLAVEUC',
                    columns='Year',
                    values='PROVEEDOR_CONTRATISTA')
-            .loc[:, list(range(2012, 2018))]
             .fillna(0))
+
     df = df.assign(
         disminucion_en_participacion=df.apply(
             _estimar_pendiente, axis=1)
     ).reset_index()
+
     df = df.loc[:, ['CLAVEUC', 'disminucion_en_participacion']]
     return df
 
