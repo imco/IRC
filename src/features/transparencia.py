@@ -516,8 +516,14 @@ def pc_inconsistencias_en_monto(df_proc: DataFrame,
     """
     df_proc: DataFrame = df_proc.copy()
     df_part: DataFrame = df_part.copy()
+
     # Calcular el monto de los ganadores en participantes
-    df_ganadores = df_part.loc[df_part.ESTATUS_FALLO == 'GANADOR']
+    if 'ESTATUS_FALLO' in df_part.columns:
+        df_ganadores = df_part.loc[df_part.ESTATUS_FALLO == 'GANADOR']
+    else:
+        # La nueva base conseguida del SIPOT no tiene ESTATUS_FALLO
+        df_ganadores = df_part.loc[:, :]
+
     estatus = df_ganadores.ESTATUS_DE_PROPUESTA.mask(
         df_ganadores.ESTATUS_DE_PROPUESTA == 'SIN REPORTAR', 'GANADOR'
     )
@@ -573,8 +579,11 @@ def pc_procs_con_provs_faltantes(df_proc: DataFrame,
     df_proc: DataFrame = (df_proc.copy().loc[:, col_interes])
     df_part: DataFrame = df_part.copy()
 
-    # solo los ganadores
-    df_part = df_part.loc[df_part.ESTATUS_FALLO == 'GANADOR']
+    # Sólo los ganadores
+    # La nueva base conseguida del SIPOT no tiene ESTATUS_FALLO
+    if 'ESTATUS_FALLO' in df_part.columns:
+        df_part = df_part.loc[df_part.ESTATUS_FALLO == 'GANADOR']
+
     estatus = df_part.ESTATUS_DE_PROPUESTA.mask(
         df_part.ESTATUS_DE_PROPUESTA == 'SIN REPORTAR', 'GANADOR'
     )
