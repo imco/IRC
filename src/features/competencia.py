@@ -618,7 +618,12 @@ def participantes_por_ganadores(df: DataFrame) -> DataFrame:
     """
     df = df.copy()
     # Se sacan los procedimientos que sí se realizaron
-    df_participantes = df.loc[df.ESTATUS_FALLO == 'GANADOR']
+    if 'ESTATUS_FALLO' in df.columns:
+        df_participantes = df.loc[df.ESTATUS_FALLO == 'GANADOR']
+    else:
+        # La nueva base conseguida del SIPOT no tiene ESTATUS_FALLO
+        df_participantes = df.loc[:, :]
+
     estatus = df_participantes.ESTATUS_DE_PROPUESTA.mask(
         df_participantes.ESTATUS_DE_PROPUESTA == 'SIN REPORTAR', 'GANADOR'
     )
