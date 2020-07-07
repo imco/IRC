@@ -5,7 +5,7 @@ from features.transparencia import (
 )
 
 
-class TestAnomalias:
+class TestTransparencia:
     def test_pc_procs_con_testigo_social(self):
         df_test = pd.DataFrame(data=[
             ['001', 1000, 1],
