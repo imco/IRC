@@ -14,6 +14,7 @@ REQUIRED = [
     'matplotlib',
     'numpy',
     'pandas',
+    'pytest',
     'python-snappy',
     'scikit-learn',
     'seaborn',
