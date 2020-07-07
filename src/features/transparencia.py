@@ -628,3 +628,37 @@ def pc_procs_con_provs_faltantes(df_proc: DataFrame,
     df_final = df_final.assign(pc_procs_con_provs_faltantes=feature)
     df_feature = df_final.loc[:, ['CLAVEUC', 'pc_procs_con_provs_faltantes']]
     return df_feature
+
+
+def pc_procs_con_testigo_social(df: DataFrame, **kwargs) -> DataFrame:
+    """
+    Usa tabla scraper.
+    Calcula el porcentaje de procedimientos con testigo social.
+    Indicador:
+        Porcentaje de procedimientos que contaron con testimonio del Testigo Social
+    """
+    df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
+    col_interes = 'testigo_social'
+    col_feature = 'pc_procs_con_testigo_social'
+    df = df.copy()
+    df_feature = (df.groupby(['CLAVEUC', col_interes],
+                             as_index=False).CODIGO_EXPEDIENTE.count()
+                    .pivot(index='CLAVEUC',
+                           columns=col_interes,
+                           values='CODIGO_EXPEDIENTE')
+                    .fillna(0)
+                    .rename(columns={1: col_feature}))
+
+    columnas = list(df_feature.columns.values)
+    if col_feature not in columnas:
+        raise ValueError('Ningún procedimiento presento testigo')
+
+    df_feature = (df_feature * 100).divide(df_feature.sum(axis=1), axis=0)
+    df_feature = (df_feature.reset_index()
+                  .loc[:, ['CLAVEUC', col_feature]])
+    df_feature.columns.name = ''
+    df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
+    df_feature = df_feature.fillna(0)
+
+    return df_feature
+
