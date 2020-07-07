@@ -353,7 +353,10 @@ def pc_estratificacion_mal_reportada(df: DataFrame,
     df_feature = (df_feature * 100).divide(df_feature.sum(axis=1), axis=0)
     df_feature = df_feature.fillna(0)
     if False not in df_feature.columns:
-        raise ValueError('Todos reportaron su valor correctamente')
+        # O todos reportaron su valor correctamente
+        # O talvez no reportaron Estratificación,
+        # como es el caso de 2018-2019.
+        df_feature[False] = 0
 
     col_feature = 'pc_estratificacion_mal_reportada'
     df_feature = df_feature.rename(columns={False: col_feature})
