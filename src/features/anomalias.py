@@ -583,3 +583,37 @@ def pc_procs_sin_convocatoria(df: DataFrame,
     df_feature = df_feature.fillna(0)
     return df_feature
 
+def procs_con_incumplimiento_de_exclusividad_mipyme(df_procs: DataFrame,
+                                                    df_scraper: DataFrame) -> DataFrame:
+    """
+    Procedimientos publicados como exclusivos para MiPYMES
+    que incumplen esta condición.
+    Indicador:
+        - Incumplimiento de procedimientos exclusivos para MYPYMES
+    """
+    df = df_procs.copy()
+    cols = ['CLAVEUC', 'CODIGO_EXPEDIENTE']
+
+    df = df.drop_duplicates(subset=cols)
+    df = df.loc[:, cols + ['ESTRATIFICACION_MPC']]
+
+    exclusividad = df_scraper[['CODIGO_EXPEDIENTE', 'exclusivo_mipymes']].drop_duplicates(subset=['CODIGO_EXPEDIENTE'])
+    df = df.merge(exclusividad, how='left')
+    df['incumplimiento'] = ((df.exclusivo_mipymes == 1) &
+                            (df.ESTRATIFICACION_MPC.isin(['NO MIPYME'])))
+
+    df_feature = (df.groupby(['CLAVEUC', 'incumplimiento'], as_index=False)
+                  .CODIGO_EXPEDIENTE.count())
+    df_feature = df_feature.pivot(index='CLAVEUC',
+                                  columns='incumplimiento',
+                                  values='CODIGO_EXPEDIENTE')
+    df_feature.fillna(0, inplace=True)
+
+    col_feature = 'procs_con_incumplimiento_de_exclusividad_mipyme'
+    df_feature = df_feature.rename(columns={True: col_feature})
+    df_feature = (df_feature.reset_index()
+                  .loc[:, ['CLAVEUC', col_feature]])
+    df_feature.columns.name = ''
+
+    return df_feature
+
