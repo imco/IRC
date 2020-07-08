@@ -327,6 +327,35 @@ def procesar_dataframe_sipot(df: DataFrame, type: str) -> DataFrame:
     return df
 
 
+def clean_base_convenios(df: DataFrame) -> DataFrame:
+    """
+    Homologa tablas referenciadas extraídas de XLS y XLSX de SIPOT.
+    En este caso es para la tabla 334268 y 334310
+    - Renombra las columnas
+    - Pasa varios campos a mayúscula
+    - Remueve acentos
+    - Normaliza razones sociales
+    """
+    # Para el caso de las tablas extraídas de XLSX
+    if df.columns.size > 5:
+        # Borramos estas columnas porque no aparecen en las TABLAS de XLS (FECHA CREACION, FECHA MODIFICACION)
+        df.drop(columns=[1, 2], inplace=True)
+
+    assert(df.columns.size == 5)
+
+    # Agregamos nombres de columna
+    # Originalmente eran
+    # - Id
+    # - Número de Convenio Modificatorio
+    # - Objeto Del Convenio Modificatorio
+    # - Fecha de Firma Del Convenio Modificatorio
+    # - Hipervínculo Al Documento Del Convenio
+    col_names = ['ID', 'NUMERO_CONVENIO', 'OBJETO_CONVENIO', 'FECHA_CONVENIO', 'LIGA_CONVENIO']
+    df.columns = col_names
+
+    return df
+
+
 def clean_base_cotizaciones(df: DataFrame) -> DataFrame:
     """
     Homologa tablas referenciadas extraídas de XLS y XLSX de SIPOT.
