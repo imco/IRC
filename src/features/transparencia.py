@@ -630,6 +630,60 @@ def pc_procs_con_provs_faltantes(df_proc: DataFrame,
     return df_feature
 
 
+def promedio_datos_faltantes_por_contrato_pnt(df_procs: DataFrame,
+                                              df_sipot: DataFrame) -> DataFrame:
+    """
+    Indicador compuesto de las siguientes variables que
+    miden Falta de Transparencia en PNT:
+        1. Adjudicación directa sin autorización del ejercicio de la opción (dictamen).
+        2. Adjudicación directa sin cotización (posibles contratantes)
+        3. Adjudicación directa sin contrato
+        4. INV3 y/o LP sin convocatoria.
+        5. INV3 y/o LP sin fallo de adjudicación.
+        6. INV3 y/o LP sin contrato.
+        7. INV3 y/o LP sin finiquito.
+        8. Inconsistencias en el monto reportado entre la PNT y Compranet.
+        9. Inconsistencias entre lo publicado en Compranet y en PNT
+    """
+    ad_cols = ['LIGA_AUTORIZACION', 'REF_COTIZACIONES', 'LIGA_CONTRATO']
+    lp_cols = ['LIGA_CONVOCATORIA', 'LIGA_FALLO', 'LIGA_CONTRATO', 'LIGA_FINIQUITO']
+    id_cols = [
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'TIPO_CONTRATACION',
+        'PROVEEDOR_CONTRATISTA'
+    ]
+
+    merged = df_procs.merge(df_sipot, on=id_cols, how='left', indicator=True)
+
+    # Fallas
+    is_adj = merged['TIPO_PROCEDIMIENTO'] == 'ADJUDICACION DIRECTA'
+    is_lic = ((merged['TIPO_PROCEDIMIENTO'] == 'LICITACION PUBLICA') |
+              (merged['TIPO_PROCEDIMIENTO'] == 'INVITACION A CUANDO MENOS TRES'))
+    missing = merged['_merge'] == 'left_only'
+    f1 = ~missing & is_adj & merged.LIGA_AUTORIZACION.isnull()
+    f2 = ~missing & is_adj & merged.REF_COTIZACIONES.isnull()
+    f3 = ~missing & is_adj & merged.LIGA_CONTRATO.isnull()
+    f4 = ~missing & is_lic & merged.LIGA_CONVOCATORIA.isnull()
+    f5 = ~missing & is_lic & merged.LIGA_FALLO.isnull()
+    f6 = ~missing & is_lic & merged.LIGA_CONTRATO.isnull()
+    f7 = ~missing & is_lic & merged.LIGA_FINIQUITO.isnull()
+    f8 = ~missing & (merged.IMPORTE_PESOS != merged.PRECIO_TOTAL)
+    f9 = merged._merge == 'left_only'
+
+    # Agrega features de fallas y los suma
+    fallas = pd.concat([f1, f2, f3, f4, f5, f6, f7, f8, f9], axis=1)
+    merged = merged.assign(total_fallas=fallas.iloc[:, -9:].sum(axis=1))
+
+    # Sacamos el promedio por UC
+    df_claves = pd.DataFrame(data=df_procs.CLAVEUC.unique(), columns=['CLAVEUC'])
+    df_feature = (merged.groupby('CLAVEUC', as_index=False)
+                  .total_fallas.mean()
+                  .rename(columns={'total_fallas': 'promedio_datos_faltantes_por_contrato_pnt'}))
+
+    return df_feature
+
+
 def pc_procs_con_testigo_social(df: DataFrame, **kwargs) -> DataFrame:
     """
     Usa tabla scraper.
