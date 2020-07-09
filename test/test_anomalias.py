@@ -1,12 +1,40 @@
 import pandas as pd
 
 from features.anomalias import (
+    pc_inconsistencias_convenios_pnt_compranet,
     procs_con_incumplimiento_de_exclusividad_mipyme,
     pc_adj_directas_excedieron_monto_fraccionado
 )
 
 
 class TestAnomalias:
+    def test_pc_inconsistencias_convenios_pnt_compranet(self):
+        common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION']
+        df_test_scrap = pd.DataFrame(data=[
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '001', 0],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '001', 1],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '001', 1],
+            ['001-AD-0004/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '001', 2],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '002', 0],
+            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '002', 0]
+        ], columns=common + ['CLAVEUC', 'numero_convenios'])
+
+        df_test_sipot = pd.DataFrame(data=[
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 0],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 1],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 2],
+            ['001-AD-0004/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 2],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 1]
+        ], columns=common + ['LIGA_CONVENIO'])
+
+        df_expected = pd.DataFrame(data=[
+            ['001', .25],
+            ['002', 1.0]
+        ], columns=['CLAVEUC', 'pc_inconsistencias_convenios_pnt_compranet'])
+
+        res = pc_inconsistencias_convenios_pnt_compranet(df_test_scrap, df_test_sipot)
+        pd.testing.assert_frame_equal(res, df_expected)
+
     def test_procs_con_incumplimiento_de_exclusividad_mipyme(self):
         df_test_procs = pd.DataFrame(data=[
             ['001', 1000, 'MICRO'],

@@ -156,6 +156,55 @@ def pc_contratos_con_convenio(df: DataFrame, **kwargs) -> DataFrame:
     return df_feature
 
 
+def pc_inconsistencias_convenios_pnt_compranet(df_scraper: DataFrame,
+                                               df_sipot: DataFrame) -> DataFrame:
+    """
+    Porcentaje de procedimientos por UC que presentan inconsistencias
+    en el número de convenios modificatorios publicados en Compranet y PNT.
+    Medido como el número de urls diponibles en cada proceso de compra.
+
+    Indicador:
+        Porcentaje de procedimientos con inconsistencias entre
+        PNT y compranet en publicación de convenios modificatorios.
+    """
+    df_claves = pd.DataFrame(data=df_scraper.CLAVEUC.unique(), columns=['CLAVEUC'])
+
+    cols = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION']
+
+    df1 = df_scraper[~df_scraper.duplicated(subset=cols, keep='last')]
+    df2 = df_sipot[~df_sipot.duplicated(subset=cols, keep='last')]
+    merged = pd.merge(df1, df2, on=cols, how='left')
+
+    # Para que no se hagan matches accidentales de Nones de SIPOT con 0's en Compranet
+    merged.numero_convenios.fillna(-2, inplace=True)
+    merged.LIGA_CONVENIO.fillna(-1, inplace=True)
+
+    inconsistente = merged['numero_convenios'] != merged['LIGA_CONVENIO']
+    merged = merged.assign(inconsistente=inconsistente)
+
+    counts = (merged.groupby(['CLAVEUC', 'inconsistente'])
+              .LIGA_CONVENIO.count()
+              .reset_index()
+              .pivot(index='CLAVEUC',
+                     columns='inconsistente',
+                     values='LIGA_CONVENIO')
+              .fillna(0)
+              .rename(columns={True: 'num_inconsistente'}))
+
+    feature_col = 'pc_inconsistencias_convenios_pnt_compranet'
+
+    # El numero de positivos / el total de la fila (False + True)
+    pc_inconsistentes = counts.num_inconsistente.divide(counts.sum(axis=1))
+    df_inconsistentes = pd.DataFrame(data=pc_inconsistentes,
+                                     columns=[feature_col])
+
+    df_feature = (pd.merge(df_claves, df_inconsistentes, on='CLAVEUC', how='left')
+                  .loc[:, ['CLAVEUC', feature_col]]
+                  .fillna(0))
+
+    return df_feature
+
+
 def pc_licitaciones_nacionales_menor_15_dias(df: DataFrame,
                                              **kwargs) -> DataFrame:
     """
