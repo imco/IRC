@@ -23,20 +23,6 @@ Actualmente, un repositorio abierto es la mejor herramienta para publicar los re
 
 Esta serie de beneficios permite expandir el alcance del proyecto a prácticamente todo el mundo, lo cual genera beneficios en materia de rendición de cuentas y transparencia en los procesos de contrataciones públicas en México. Asimismo, es un primer paso para impulsar el análisis continuo de estos procesos, elemento esencial para mitigar los riesgos de corrupción en el uso del presupuesto público.
 
-
-## Datos procesados
-Para calcular los features de cada concepto se requieren las siguiente tablas:
-* [Tabla de Procedimientos y Contrataciones 2012-2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.psv) [(En formato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.parquet)
-* [Tabla de Participantes 2010 - 2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes.zip) [(En formato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes_parquet.zip)
-* [Datos del scraper (raw)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/raw_data_scraper_20170608.json)
-* [Tabla limpia del scraper](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/tabla_scraper_features.csv)
-* [Tabla de proveedores sancionados](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/SancionProveedoresContratistas.xls)
-* [Tabla de RFC fantasma](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/RFC_fantasma.csv)
-* [Relación de montos máximos por tipo de contratación](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/Montos_maximos.csv)
-* [Tabla con los nombres de las unidades compradoras](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/nombres_unidades_compradoras.csv)
-* [Directorio de unidades compradoras](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/directorio_UC.xlsx)
-* [Códigos repetidos en la tabla de procedimientos](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/codigos_expediente_repetidos.csv)
-
 ## Instalación
 El análisis de este proyecto se realizó con python, para ejecutar el código de este repositorio se recomienda instalar [miniconda](https://conda.io/miniconda.html).
 Una vez instalado puedes correr el siguiente comando (en este mismo directorio) para que se instalen todas las dependencias:
@@ -60,6 +46,21 @@ $ pip install --editable .
 - python 3+
 - libsnappy
 
+# v1.0
+
+## Datos procesados
+Para calcular los features de cada concepto se requieren las siguiente tablas:
+* [Tabla de Procedimientos y Contrataciones 2012-2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.psv) [(En formato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/procedimientos.parquet)
+* [Tabla de Participantes 2010 - 2017](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes.zip) [(En formato parquet)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/participantes_parquet.zip)
+* [Datos del scraper (raw)](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/raw_data_scraper_20170608.json)
+* [Tabla limpia del scraper](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/tabla_scraper_features.csv)
+* [Tabla de proveedores sancionados](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/SancionProveedoresContratistas.xls)
+* [Tabla de RFC fantasma](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/RFC_fantasma.csv)
+* [Relación de montos máximos por tipo de contratación](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/Montos_maximos.csv)
+* [Tabla con los nombres de las unidades compradoras](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/nombres_unidades_compradoras.csv)
+* [Directorio de unidades compradoras](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/directorio_UC.xlsx)
+* [Códigos repetidos en la tabla de procedimientos](https://s3-us-west-2.amazonaws.com/opi-compranet/public/data/codigos_expediente_repetidos.csv)
+
 ## Cómo crear las score cards
 Para generar los features debes de correr el código que está
 en la notebook [generacion_features.ipynb](https://github.com/opintel/como-identificar-focos-rojos-en-contrataciones-publicas/blob/master/notebooks/generacion_features.ipynb).
@@ -69,3 +70,9 @@ Cuando se tengan los features calculados puedes usar el script
 [crear_score_cards.py](https://github.com/opintel/como-identificar-focos-rojos-en-contrataciones-publicas/blob/master/scripts/crear_score_cards.py)
 que está en la carpeta de scripts para generar los archivos pdf con las score cards, de igual manera
 tienes que ajustar las rutas de los datos procesados y features.
+
+# v2.0
+
+La versión 2.0 integra nuevas fuentes y se enfoca en datos de 2018 y 2019.
+
+Toda la documentación del proceso, así como sus fuentes se encuentran documentadas en la notebook [IRC_v2.ipynb](https://github.com/imco/IRC/blob/master/notebooks/IRC_v2.ipynb).
