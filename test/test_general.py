@@ -40,13 +40,12 @@ class TestGeneral:
     def test_numero_contratos_por_tipo(self):
         df_test_procs = self.get_test_procs()
         df_expected = pd.DataFrame(data=[
-            ['0001', 2.0, 0.0, 1.0, 3],
-            ['0002', 1.0, 0.0, 3.0, 4],
-            ['0003', 0.0, 1.0, 0.0, 1]
+            ['0001', 2.0, 0.0, 1.0],
+            ['0002', 1.0, 0.0, 3.0],
+            ['0003', 0.0, 1.0, 0.0]
         ], columns=[
             'CLAVEUC',
-            'numero_contratos_AD', 'numero_contratos_INV3', 'numero_contratos_LP',
-            'numero_contratos'
+            'numero_contratos_AD', 'numero_contratos_INV3', 'numero_contratos_LP'
         ])
 
         res = numero_contratos_por_tipo(df_test_procs)

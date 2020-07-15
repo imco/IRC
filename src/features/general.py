@@ -126,17 +126,14 @@ def numero_contratos_por_tipo(df: DataFrame, **kwargs) -> DataFrame:
     col_mapping = {
         'ADJUDICACION DIRECTA': 'numero_contratos_AD',
         'LICITACION PUBLICA': 'numero_contratos_LP',
-        'INVITACION A CUANDO MENOS TRES': 'numero_contratos_INV3',
-        'All': 'numero_contratos'
+        'INVITACION A CUANDO MENOS TRES': 'numero_contratos_INV3'
     }
 
     contratos_total = (contratos_total.groupby(['CLAVEUC', 'TIPO_PROCEDIMIENTO'], as_index=False)
                        .numero_contratos.sum()
                        .pivot_table(columns='TIPO_PROCEDIMIENTO',
                                     values='numero_contratos',
-                                    index='CLAVEUC',
-                                    aggfunc='sum',
-                                    margins=True))
+                                    index='CLAVEUC'))
 
     sin_registros = [k for k in col_mapping if k not in contratos_total.columns]
     for k in sin_registros:
@@ -144,7 +141,6 @@ def numero_contratos_por_tipo(df: DataFrame, **kwargs) -> DataFrame:
 
     contratos_total = (contratos_total.rename(columns=col_mapping)
                        .fillna(0)
-                       .drop('All', axis=0)
                        .rename_axis(None, axis=1)
                        .reset_index())
 
