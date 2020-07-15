@@ -16,7 +16,8 @@ class TestGeneral:
             ['ISSSTE', '0002', 'Empresa C', '001-LP-1005/2018', 1005, 'LICITACION PUBLICA', 90000],
             ['ISSSTE', '0002', 'Empresa D', '001-LP-1006/2018', 1006, 'LICITACION PUBLICA', 80000],
             ['ISSSTE', '0002', 'Empresa E', '001-LP-1007/2018', 1007, 'LICITACION PUBLICA', 40000],
-            ['ISSSTE', '0003', 'Empresa A', '001-LP-1008/2018', 1008, 'INVITACION A CUANDO MENOS TRES', 70000]
+            ['ISSSTE', '0003', 'Empresa A', '001-LP-1008/2018', 1008, 'INVITACION A CUANDO MENOS TRES', 70000],
+            ['ISSSTE', '0003', 'Empresa A', '001-LP-1009/2018', 1009, 'OTRO', 20000]
         ], columns=[
             'DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
             'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO',

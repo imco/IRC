@@ -31,7 +31,16 @@ def monto_total_por_tipo(df: DataFrame,
     Calcula el monto de la unidad compradora
     por tipo de procedimiento.
     """
-    monto_por_contrato = df.groupby(
+    col_mapping = {
+        'ADJUDICACION DIRECTA': 'monto_AD',
+        'LICITACION PUBLICA': 'monto_LP',
+        'INVITACION A CUANDO MENOS TRES': 'monto_INV3'
+    }
+
+    # Solo de los 3 Tipos de interés
+    sub_df =df[df['TIPO_PROCEDIMIENTO'].isin(col_mapping.keys())]
+
+    monto_por_contrato = sub_df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
         as_index=False
@@ -46,13 +55,7 @@ def monto_total_por_tipo(df: DataFrame,
                     .rename_axis(None, axis=1)
                     .reset_index())
 
-    monto_por_uc = monto_por_uc.rename(
-        columns={
-            'ADJUDICACION DIRECTA': 'monto_AD',
-            'LICITACION PUBLICA': 'monto_LP',
-            'INVITACION A CUANDO MENOS TRES': 'monto_INV3'
-        }
-    )
+    monto_por_uc = monto_por_uc.rename(columns=col_mapping)
 
     return monto_por_uc
 
@@ -110,7 +113,16 @@ def numero_contratos_por_tipo(df: DataFrame, **kwargs) -> DataFrame:
     Calcula el número de contratos por UC
     y por TIPO_PROCEDIMIENTO
     """
-    monto_por_contrato = df.groupby(
+    col_mapping = {
+        'ADJUDICACION DIRECTA': 'numero_contratos_AD',
+        'LICITACION PUBLICA': 'numero_contratos_LP',
+        'INVITACION A CUANDO MENOS TRES': 'numero_contratos_INV3'
+    }
+
+    # Solo de los 3 Tipos de interés
+    sub_df =df[df['TIPO_PROCEDIMIENTO'].isin(col_mapping.keys())]
+
+    monto_por_contrato = sub_df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
          'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
         as_index=False
@@ -122,12 +134,6 @@ def numero_contratos_por_tipo(df: DataFrame, **kwargs) -> DataFrame:
     contratos_total = contratos_total.reset_index()
     contratos_total = contratos_total.rename(
         columns={'CODIGO_CONTRATO': 'numero_contratos'})
-
-    col_mapping = {
-        'ADJUDICACION DIRECTA': 'numero_contratos_AD',
-        'LICITACION PUBLICA': 'numero_contratos_LP',
-        'INVITACION A CUANDO MENOS TRES': 'numero_contratos_INV3'
-    }
 
     contratos_total = (contratos_total.groupby(['CLAVEUC', 'TIPO_PROCEDIMIENTO'], as_index=False)
                        .numero_contratos.sum()
