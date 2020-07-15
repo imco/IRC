@@ -25,6 +25,38 @@ def monto_total(df: DataFrame,
     return monto_por_uc
 
 
+def monto_total_por_tipo(df: DataFrame,
+                         **kwargs) -> DataFrame:
+    """
+    Calcula el monto de la unidad compradora
+    por tipo de procedimiento.
+    """
+    monto_por_contrato = df.groupby(
+        ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
+         'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
+        as_index=False
+    ).IMPORTE_PESOS.sum()
+
+    monto_por_uc = (monto_por_contrato.groupby(['CLAVEUC', 'TIPO_PROCEDIMIENTO'], as_index=False)
+                    .IMPORTE_PESOS.sum()
+                    .pivot_table(columns='TIPO_PROCEDIMIENTO',
+                                 values='IMPORTE_PESOS',
+                                 index='CLAVEUC')
+                    .fillna(0)
+                    .rename_axis(None, axis=1)
+                    .reset_index())
+
+    monto_por_uc = monto_por_uc.rename(
+        columns={
+            'ADJUDICACION DIRECTA': 'monto_AD',
+            'LICITACION PUBLICA': 'monto_LP',
+            'INVITACION A CUANDO MENOS TRES': 'monto_INV3'
+        }
+    )
+
+    return monto_por_uc
+
+
 def num_proveedores_unicos(df: DataFrame,
                            **kwargs) -> DataFrame:
     """Calcula el número de proveedores distintos por unidad compradora"""

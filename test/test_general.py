@@ -1,13 +1,14 @@
 import pandas as pd
 
 from features.general import (
+    monto_total_por_tipo,
     numero_contratos_por_tipo
 )
 
 
 class TestGeneral:
-    def test_numero_contratos_por_tipo(self):
-        df_test_procs = pd.DataFrame(data=[
+    def get_test_procs(self):
+        return pd.DataFrame(data=[
             ['ISSSTE', '0001', 'Empresa A', '001-AD-1001/2018', 1001, 'ADJUDICACION DIRECTA', 12000],
             ['ISSSTE', '0001', 'Empresa A', '001-AD-1002/2018', 1002, 'ADJUDICACION DIRECTA', 14000],
             ['ISSSTE', '0001', 'Empresa B', '001-LP-1003/2018', 1003, 'LICITACION PUBLICA', 114000],
@@ -22,6 +23,22 @@ class TestGeneral:
             'IMPORTE_PESOS'
         ])
 
+    def test_monto_total_por_tipo(self):
+        df_test_procs = self.get_test_procs()
+        df_expected = pd.DataFrame(data=[
+            ['0001', 26000.0, 0.0, 114000.0],
+            ['0002', 4000.0, 0.0, 210000.0],
+            ['0003', 0.0, 70000.0, 0.0]
+        ], columns=[
+            'CLAVEUC',
+            'monto_AD', 'monto_INV3', 'monto_LP'
+        ])
+
+        res = monto_total_por_tipo(df_test_procs)
+        pd.testing.assert_frame_equal(res, df_expected)
+
+    def test_numero_contratos_por_tipo(self):
+        df_test_procs = self.get_test_procs()
         df_expected = pd.DataFrame(data=[
             ['0001', 2.0, 0.0, 1.0, 3],
             ['0002', 1.0, 0.0, 3.0, 4],
