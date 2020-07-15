@@ -72,3 +72,48 @@ def numero_contratos(df: DataFrame, **kwargs) -> DataFrame:
                                       .numero_contratos.sum())
     return contratos_total
 
+
+def numero_contratos_por_tipo(df: DataFrame, **kwargs) -> DataFrame:
+    """
+    Calcula el número de contratos por UC
+    y por TIPO_PROCEDIMIENTO
+    """
+    monto_por_contrato = df.groupby(
+        ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
+         'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO', 'TIPO_PROCEDIMIENTO'],
+        as_index=False
+    ).IMPORTE_PESOS.sum()
+
+    # Numero de contratos
+    contratos_total = monto_por_contrato.groupby(
+        ['CLAVEUC', 'NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO']).CODIGO_CONTRATO.nunique()
+    contratos_total = contratos_total.reset_index()
+    contratos_total = contratos_total.rename(
+        columns={'CODIGO_CONTRATO': 'numero_contratos'})
+
+    col_mapping = {
+        'ADJUDICACION DIRECTA': 'numero_contratos_AD',
+        'LICITACION PUBLICA': 'numero_contratos_LP',
+        'INVITACION A CUANDO MENOS TRES': 'numero_contratos_INV3',
+        'All': 'numero_contratos'
+    }
+
+    contratos_total = (contratos_total.groupby(['CLAVEUC', 'TIPO_PROCEDIMIENTO'], as_index=False)
+                       .numero_contratos.sum()
+                       .pivot_table(columns='TIPO_PROCEDIMIENTO',
+                                    values='numero_contratos',
+                                    index='CLAVEUC',
+                                    aggfunc='sum',
+                                    margins=True))
+
+    sin_registros = [k for k in col_mapping if k not in contratos_total.columns]
+    for k in sin_registros:
+        contratos_total[k] = 0
+
+    contratos_total = (contratos_total.rename(columns=col_mapping)
+                       .fillna(0)
+                       .drop('All', axis=0)
+                       .rename_axis(None, axis=1)
+                       .reset_index())
+
+    return contratos_total
