@@ -68,3 +68,64 @@ def falta_transparencia_pnt(df_procs: DataFrame,
     df_feature = pd.concat([merged, fallas], axis=1)
 
     return df_feature
+
+
+def plazos_cortos(df_procs: DataFrame,
+                  df_parts: DataFrame) -> DataFrame:
+    """
+    Calcula indicadores necesarios por contratos para calcular Plazos cortos.
+    P. ej. si existió competencia o si los procesos limitaron la participación.
+        1. Diferencia entre la Fecha de publicación del anuncio y Fecha de apertura de propuestas
+        2. Número de empresas que presentaron propuesta
+        3. Plazos cortos nacionales
+        4. Plazos cortos internacionales
+        5. Plazos cortos internacionales bajo la cobertura de tratados
+
+    Utiliza las tablas de procedimientos y participantes
+    """
+    res = df_procs.copy()
+
+    # 1. Diferencia de días entre ambas fechas.
+    f1 = (res['FECHA_APERTURA_PROPOSICIONES'] - res['PROC_F_PUBLICACION']).dt.days
+    res = res.assign(diff_anuncio_apertura=f1)
+
+    # 2. Número total de propuestas por proceso.
+    # Para esto debemos ligar procedimientos y participaciones
+    # A pesar de que CODIGO_CONTRATO es único en la tabla de procedimientos
+    # La tabla de participantes no tiene este identificador, y usa NUMERO_PROCEDIMIENTO
+    # el cual tiene alrededor de 25% de duplicados en los procedimientos.
+    # Usando una llave compuesta reducimos los duplicados a menos del 1%:
+    keys = [
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'TIPO_CONTRATACION',
+        'FECHA_INICIO'
+    ]
+    # La manera de agrupar las participaciones (encontradas en el SIPOT de la PNT)
+    # es utilizando la columna REF_PARTICIPANTES que hace referencia a un identificador
+    # utilizado para ligar la tabla principal con el detalle de participantes por proceso.
+    participaciones = (df_parts.groupby(keys + ['REF_PARTICIPANTES'])
+                       .PROVEEDOR_CONTRATISTA.count()
+                       .reset_index()
+                       .rename(columns={'PROVEEDOR_CONTRATISTA': 'num_propuestas'}))
+
+    # Anexamos num. de participaciones a la tabla resultado
+    res = res.merge(participaciones, on=keys, how='left')
+    # Podemos asumir que aunque no esten en la tabla de participantes, al menos tuvieron 1 ganador
+    res['num_propuestas'] = res['num_propuestas'].fillna(1)
+    res['num_propuestas'] = res['num_propuestas'].astype(int)
+    res = res.drop('REF_PARTICIPANTES', axis=1)
+
+    # Cuenta el número de empresas que presentaron propuesta cuando hay corto plazo;
+    # cero de lo contrario.
+    # 3. Si diff entre fechas de anuncio y apertura de propuestas <15
+    res['plazos_cortos_nacionales'] = np.where(res['diff_anuncio_apertura'] < 15,
+                                               res['num_propuestas'], 0)
+    # 4. Si diff entre fechas de anuncio y apertura de propuestas <20
+    res['plazos_cortos_internacionales'] = np.where(res['diff_anuncio_apertura'] < 20,
+                                                    res['num_propuestas'], 0)
+    # 5. Si diff entre fechas de anuncio y apertura de propuestas <40
+    res['plazos_cortos_internacionales_bajo_tratados'] = np.where(res['diff_anuncio_apertura'] < 40,
+                                                                  res['num_propuestas'], 0)
+
+    return res
