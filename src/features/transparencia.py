@@ -2,6 +2,7 @@
 
 # Created by Raul Peralta-Lozada (28/09/17)
 import bisect
+from features.productos import falta_transparencia_pnt
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import Ridge
@@ -644,40 +645,18 @@ def promedio_datos_faltantes_por_contrato_pnt(df_procs: DataFrame,
         7. INV3 y/o LP sin finiquito.
         8. Inconsistencias en el monto reportado entre la PNT y Compranet.
         9. Inconsistencias entre lo publicado en Compranet y en PNT
+
+    Utiliza el subproducto falta_transparencia_pnt
     """
-    ad_cols = ['LIGA_AUTORIZACION', 'REF_COTIZACIONES', 'LIGA_CONTRATO']
-    lp_cols = ['LIGA_CONVOCATORIA', 'LIGA_FALLO', 'LIGA_CONTRATO', 'LIGA_FINIQUITO']
-    id_cols = [
-        'NUMERO_PROCEDIMIENTO',
-        'TIPO_PROCEDIMIENTO',
-        'TIPO_CONTRATACION',
-        'PROVEEDOR_CONTRATISTA'
-    ]
-
-    merged = df_procs.merge(df_sipot, on=id_cols, how='left', indicator=True)
-
-    # Fallas
-    is_adj = merged['TIPO_PROCEDIMIENTO'] == 'ADJUDICACION DIRECTA'
-    is_lic = ((merged['TIPO_PROCEDIMIENTO'] == 'LICITACION PUBLICA') |
-              (merged['TIPO_PROCEDIMIENTO'] == 'INVITACION A CUANDO MENOS TRES'))
-    missing = merged['_merge'] == 'left_only'
-    f1 = ~missing & is_adj & merged.LIGA_AUTORIZACION.isnull()
-    f2 = ~missing & is_adj & merged.REF_COTIZACIONES.isnull()
-    f3 = ~missing & is_adj & merged.LIGA_CONTRATO.isnull()
-    f4 = ~missing & is_lic & merged.LIGA_CONVOCATORIA.isnull()
-    f5 = ~missing & is_lic & merged.LIGA_FALLO.isnull()
-    f6 = ~missing & is_lic & merged.LIGA_CONTRATO.isnull()
-    f7 = ~missing & is_lic & merged.LIGA_FINIQUITO.isnull()
-    f8 = ~missing & (merged.IMPORTE_PESOS != merged.PRECIO_TOTAL)
-    f9 = merged._merge == 'left_only'
-
-    # Agrega features de fallas y los suma
-    fallas = pd.concat([f1, f2, f3, f4, f5, f6, f7, f8, f9], axis=1)
-    merged = merged.assign(total_fallas=fallas.iloc[:, -9:].sum(axis=1))
+    # Usamos los procedimientos como base
+    # Consigue las 9 variables y las suma en una nueva columna
+    fallas = df_procs.merge(falta_transparencia_pnt(df_procs, df_sipot))
+    new_cols = [c for c in fallas.columns if c not in df_procs.columns]
+    fallas = fallas.assign(total_fallas=fallas.loc[:, new_cols].sum(axis=1))
 
     # Sacamos el promedio por UC
     df_claves = pd.DataFrame(data=df_procs.CLAVEUC.unique(), columns=['CLAVEUC'])
-    df_feature = (merged.groupby('CLAVEUC', as_index=False)
+    df_feature = (fallas.groupby('CLAVEUC', as_index=False)
                   .total_fallas.mean()
                   .rename(columns={'total_fallas': 'promedio_datos_faltantes_por_contrato_pnt'}))
 
