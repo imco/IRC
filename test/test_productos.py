@@ -5,7 +5,7 @@ from features.productos import (
 )
 
 
-class TestTransparencia:
+class TestProductos:
     def test_promedio_datos_faltantes_por_contrato_pnt(self):
         common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'PROVEEDOR_CONTRATISTA']
         sipot_cols = (['LIGA_AUTORIZACION', 'REF_COTIZACIONES', 'LIGA_CONTRATO'] +
