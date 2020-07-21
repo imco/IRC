@@ -694,16 +694,16 @@ def pc_adj_directas_excedieron_monto_fraccionado(df: DataFrame,
                     .loc[df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA'])
 
     # Crea tabla que cuenta los procedimientos que excedieron
-    uc_exceden = (fraccionados.groupby(['CLAVEUC', 'excede'])
+    uc_cuenta = (fraccionados.groupby(['CLAVEUC', 'fraccionado'])
                   .NUMERO_PROCEDIMIENTO.count()
                   .reset_index()
                   .pivot_table(index=['CLAVEUC'],
-                               columns=['excede'],
+                               columns=['fraccionado'],
                                values='NUMERO_PROCEDIMIENTO')
                   .rename(columns={True: 'num_excedidas_si', False: 'num_excedidas_no'})
                   .fillna(0))
 
-    pc_fraccionados = uc_exceden.num_excedidas_si.divide(uc_exceden.sum(axis=1))
+    pc_fraccionados = uc_cuenta.num_excedidas_si.divide(uc_cuenta.sum(axis=1))
     df_fraccionados = pd.DataFrame(data=pc_fraccionados, columns=['pc_fraccionados'])
 
     df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])

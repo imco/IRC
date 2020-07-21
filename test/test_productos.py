@@ -38,26 +38,27 @@ class TestProductos:
         ], columns=['Año', 'Tipo de contratación', 'Adjudicación directa', 'INV3'])
 
         variables = pd.DataFrame(data=[
-            [1, 1000, 1000, 1, False],
+            [1, 1000, 1000, 1000, 1, 1, False],
             # Evil corp se excede con la UC 001 en la primera semana
-            [1, 1100, 1000, 2, True],
-            [1, 1100, 1000, 2, True],
-            [None, None, None, None, None],
+            [1, 1000, 500, 1100, 2, 1, True],
+            [1, 1000, 600, 1100, 2, 1, True],
+            # Ignoramos las Licitaciones
+            [None, None, None, None, None, None, None],
             # La empresa A en Servicios no se excede
-            [5, 1000, 1000, 1, False],
+            [5, 1000, 1000, 1000, 1, 1, False],
             # tampoco en Adquisiciones porque lo contratan otras UC
-            [5, 2000, 2000, 1, False],
+            [5, 2000, 2000, 2000, 1, 1, False],
 
-            [5, 900, 2000, 3, False],
-            [5, 900, 2000, 3, False],
-            [5, 900, 2000, 3, False],
+            [5, 2000, 900, 900, 3, 3, False],
+            [5, 2000, 900, 900, 3, 3, False],
+            [5, 2000, 900, 900, 3, 3, False],
             # La empresa Evil Corp excedió en Adquisiciones semanales con la UC 002
-            [27, 2400, 2000, 3, True],
-            [27, 2400, 2000, 3, True],
-            [27, 2400, 2000, 3, True]
+            [27, 2000, 600, 2400, 3, 1, True],
+            [27, 2000, 1600, 2400, 3, 1, True],
+            [27, 2000, 200, 2400, 3, 1, True]
         ], columns=[
-            'semana', 'monto_semanal_empresa', 'maximo_permitido',
-            'contratos_semanales_empresa', 'fraccionado'
+            'semana', 'maximo_permitido', 'monto_diario_empresa', 'monto_semanal_empresa',
+            'contratos_semanales_empresa', 'contratos_diarios_empresa', 'fraccionado'
         ])
 
         df_expected = pd.concat([df_test_procs, variables], axis=1)

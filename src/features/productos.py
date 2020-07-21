@@ -37,42 +37,50 @@ def contratos_fraccionados(df_procs: DataFrame,
     df = df.assign(semana=df.FECHA_INICIO.dt.week)
 
     # 2. Monto acumulado de contratos AD en el mismo día por empresa por UC.
-    # TODO
+    daily_keys = ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'TIPO_CONTRATACION', 'FECHA_INICIO']
+    monto_diario = (df.groupby(daily_keys, as_index=False)
+                    .IMPORTE_PESOS.sum()
+                    .rename(columns={'IMPORTE_PESOS': 'monto_diario_empresa'}))
 
     # 3. Monto acumulado de contratos AD en la misma semana por empresa por UC
-    group_keys = ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'TIPO_CONTRATACION', 'semana']
-    monto_semanal = (df.groupby(group_keys, as_index=False)
+    week_keys = ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'TIPO_CONTRATACION', 'semana']
+    monto_semanal = (df.groupby(week_keys, as_index=False)
                      .IMPORTE_PESOS.sum()
                      .rename(columns={'IMPORTE_PESOS': 'monto_semanal_empresa'}))
 
     # 4. Número de contratos AD por semana por empresa por UC.
-    contratos_semanales = (df.groupby(group_keys, as_index=False)
+    contratos_semanales = (df.groupby(week_keys, as_index=False)
                            .NUMERO_PROCEDIMIENTO.count()
                            .rename(columns={'NUMERO_PROCEDIMIENTO': 'contratos_semanales_empresa'}))
 
     # 5. Número de contratos AD por día por empresa por UC.
-    # TODO
+    contratos_diarios = (df.groupby(daily_keys, as_index=False)
+                         .NUMERO_PROCEDIMIENTO.count()
+                         .rename(columns={'NUMERO_PROCEDIMIENTO': 'contratos_diarios_empresa'}))
 
     # 6. Contrato fraccionado?
     # Si en una semana una UC otorga a una empresa más de 1 contrato AD y el
     # monto acumulado supera máximos autorizados para AD en ese año.
 
     # Obtiene los máximos
-    monto_semanal = pd.merge(monto_semanal, df_maximos,
-                             left_on='TIPO_CONTRATACION',
-                             right_on='Tipo de contratación')
+    vars = (pd.merge(df_maximos, monto_diario,
+                     left_on='Tipo de contratación',
+                     right_on='TIPO_CONTRATACION')
+            .drop('Tipo de contratación', axis=1))
 
-    monto_semanal.drop('Tipo de contratación', axis=1, inplace=True)
+    # Mezcla las columnas
+    vars = vars.merge(monto_semanal)
+    vars = vars.merge(contratos_semanales)
+    vars = vars.merge(contratos_diarios)
 
     # Marca los que exceden
-    monto_semanal = pd.merge(monto_semanal, contratos_semanales)
     fraccionado = (
-        (monto_semanal.monto_semanal_empresa > monto_semanal['maximo_permitido']) &
-        (monto_semanal.contratos_semanales_empresa > 1))
-    monto_semanal = monto_semanal.assign(fraccionado=fraccionado)
+        (vars.monto_semanal_empresa > vars['maximo_permitido']) &
+        (vars.contratos_semanales_empresa > 1))
+    vars = vars.assign(fraccionado=fraccionado)
 
-    # Agrega las variables 3, 4, y 6 al resultado
-    df = df.merge(monto_semanal)
+    # Agrega las variables al resultado
+    df = df.merge(vars)
 
     # Mezcla con la tabla de procedimientos original
     return df_procs.merge(df, how='left')
