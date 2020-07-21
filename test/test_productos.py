@@ -2,6 +2,7 @@ import pandas as pd
 
 from features.productos import (
     contratos_fraccionados,
+    convenios_entre_entes_publicos,
     falta_transparencia_pnt,
     plazos_cortos
 )
@@ -63,6 +64,40 @@ class TestProductos:
 
         df_expected = pd.concat([df_test_procs, variables], axis=1)
         res = contratos_fraccionados(df_test_procs, df_maximos, year=2018)
+        pd.testing.assert_frame_equal(res, df_expected)
+
+    def test_convenios_entre_entes_publicos(self):
+        common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'PROVEEDOR_CONTRATISTA']
+        df_test_procs = pd.DataFrame(data=[
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '001', 1000],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '001', 2000],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '001', 2000],
+            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '001', 9000],
+            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '001', 5000],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '002', 3000],
+            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa F', '002', 3000]
+        ], columns=common + ['CLAVEUC', 'IMPORTE_PESOS'])
+
+        df_test_sipot = pd.DataFrame(data=[
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', 'LEY DE ADQUI Y ARRENDAMIENTOS', 1000],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'LEY DE PETROLEOS', 2000],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'LAASSP', 3000],
+            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '', 9000],
+            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '', 9000],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'Artículo 43 de LOPSRM', 3000],
+        ], columns=common + ['MOTIVOS_ADJUDICACION', 'PRECIO_TOTAL'])
+
+        variables = pd.DataFrame(data=[
+            [1, 0],
+            [0, 0],
+            [1, 0],
+            [None, None],
+            [None, None],
+            [0, 1]
+        ], columns=['LAASSP', 'LOPSRM'])
+
+        df_expected = pd.concat([df_test_procs, variables], axis=1)
+        res = convenios_entre_entes_publicos(df_test_procs, df_test_sipot)
         pd.testing.assert_frame_equal(res, df_expected)
 
     def test_promedio_datos_faltantes_por_contrato_pnt(self):

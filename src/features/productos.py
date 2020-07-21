@@ -5,6 +5,14 @@ import numpy as np
 
 DataFrame = pd.DataFrame
 
+# Columnas para cruzar Compranet con SIPOT (PNT)
+id_cols = [
+    'NUMERO_PROCEDIMIENTO',
+    'TIPO_PROCEDIMIENTO',
+    'TIPO_CONTRATACION',
+    'PROVEEDOR_CONTRATISTA'
+]
+
 
 def contratos_fraccionados(df_procs: DataFrame,
                            df_maximos: DataFrame, **kwargs) -> DataFrame:
@@ -86,6 +94,34 @@ def contratos_fraccionados(df_procs: DataFrame,
     return df_procs.merge(df, how='left')
 
 
+def convenios_entre_entes_publicos(df_procs: DataFrame,
+                                   df_sipot: DataFrame) -> DataFrame:
+    """
+    Identifica aquellos procesos bajo los artículos 1 de la LAASSP
+    o la LOPSRM en "Motivos y fundamentos legales para realizar la
+    Adjudicación Directa".
+    """
+    ad_sipot = df_sipot.copy()
+    ad_sipot = ad_sipot[ad_sipot.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA']
+
+    leyadq = (ad_sipot.MOTIVOS_ADJUDICACION
+              .str.contains(r'LEY +DE +ADQ\w+ *Y? *AR\w+', regex=True, na=False))
+    laassp = (ad_sipot.MOTIVOS_ADJUDICACION
+              .str.contains('LAASSP', na=False))
+
+    leyobr = (ad_sipot.MOTIVOS_ADJUDICACION
+              .str.contains(r'LEY +DE +OBRAS? +PU', regex=True, na=False))
+    lopsrm = (ad_sipot.MOTIVOS_ADJUDICACION
+              .str.contains('LOPSRM', na=False))
+
+    ad_sipot['LAASSP'] = (leyadq | laassp).astype(int)
+    ad_sipot['LOPSRM'] = (leyobr | lopsrm).astype(int)
+
+    # Mezclamos con la tabla de procedimientos
+    convenios = ad_sipot[id_cols + ['LAASSP', 'LOPSRM']]
+    return pd.merge(df_procs, convenios, how='left')
+
+
 def falta_transparencia_pnt(df_procs: DataFrame,
                             df_sipot: DataFrame) -> DataFrame:
     """
@@ -103,12 +139,6 @@ def falta_transparencia_pnt(df_procs: DataFrame,
     """
     ad_cols = ['LIGA_AUTORIZACION', 'REF_COTIZACIONES', 'LIGA_CONTRATO']
     lp_cols = ['LIGA_CONVOCATORIA', 'LIGA_FALLO', 'LIGA_CONTRATO', 'LIGA_FINIQUITO']
-    id_cols = [
-        'NUMERO_PROCEDIMIENTO',
-        'TIPO_PROCEDIMIENTO',
-        'TIPO_CONTRATACION',
-        'PROVEEDOR_CONTRATISTA'
-    ]
 
     merged = df_procs.merge(df_sipot, on=id_cols, how='left', indicator=True)
 
