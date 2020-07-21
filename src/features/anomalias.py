@@ -3,6 +3,7 @@
 # Created by Raul Peralta-Lozada (11/10/17)
 import pandas as pd
 from typing import List, Tuple
+from features.productos import contratos_fraccionados
 
 DataFrame = pd.DataFrame
 
@@ -689,58 +690,23 @@ def pc_adj_directas_excedieron_monto_fraccionado(df: DataFrame,
     Indicador:
         % de contratos AD a una misma empresa que rebasan el monto permitido (UC)
     """
-    if 'year' in kwargs:
-        años_validos = set([kwargs['year']])
-    else:
-        raise TypeError('Falta especificar año')
-
-    df = df.copy()
-    df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
-
-    # Sólo ADJUDICACION DIRECTA
-    df = df.loc[df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA']
-    df = df.assign(Semana=df.FECHA_INICIO.dt.week)
-
-    # Máximos del año para Adjudicación directa por distintos Tipos
-    df_maximos = df_maximos.loc[df_maximos.Año.isin(años_validos)]
-    df_maximos = df_maximos[['Tipo de contratación', 'Adjudicación directa']]
-
-    group_keys = ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'TIPO_CONTRATACION', 'Semana']
-
-    # monto semanal por proveedor de UC
-    monto_semanal = df.groupby(group_keys, as_index=False).IMPORTE_PESOS.sum()
-    # numero de contratos por proveedor de UC
-    contratos_semanales = (df.groupby(group_keys, as_index=False)
-                           .NUMERO_PROCEDIMIENTO.count()
-                           .rename(columns={'NUMERO_PROCEDIMIENTO': 'Contratos'}))
-
-    # Obtiene los máximos
-    monto_semanal = pd.merge(monto_semanal, df_maximos,
-                             left_on='TIPO_CONTRATACION',
-                             right_on='Tipo de contratación',
-                             how='inner')
-
-    # Concatena el numero de contratos involucrados en la suma semanal
-    monto_semanal = pd.merge(monto_semanal, contratos_semanales)
-    del contratos_semanales
-
-    # Marca los que exceden
-    excede = (monto_semanal.IMPORTE_PESOS > monto_semanal['Adjudicación directa'])
-    monto_semanal = monto_semanal.assign(excede=excede)
+    fraccionados = (contratos_fraccionados(df, df_maximos, year=kwargs['year'])
+                    .loc[df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA'])
 
     # Crea tabla que cuenta los procedimientos que excedieron
-    monto_semanal = (monto_semanal.groupby(['CLAVEUC', 'excede'])
-                     .Contratos.sum()
-                     .reset_index()
-                     .pivot_table(index=['CLAVEUC'],
-                                  columns=['excede'],
-                                  values='Contratos')
-                     .rename(columns={True: 'num_excedidas_si', False: 'num_excedidas_no'})
-                     .fillna(0))
+    uc_exceden = (fraccionados.groupby(['CLAVEUC', 'excede'])
+                  .NUMERO_PROCEDIMIENTO.count()
+                  .reset_index()
+                  .pivot_table(index=['CLAVEUC'],
+                               columns=['excede'],
+                               values='NUMERO_PROCEDIMIENTO')
+                  .rename(columns={True: 'num_excedidas_si', False: 'num_excedidas_no'})
+                  .fillna(0))
 
-    pc_fraccionados = monto_semanal.num_excedidas_si.divide(monto_semanal.sum(axis=1))
+    pc_fraccionados = uc_exceden.num_excedidas_si.divide(uc_exceden.sum(axis=1))
     df_fraccionados = pd.DataFrame(data=pc_fraccionados, columns=['pc_fraccionados'])
 
+    df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     df_feature = pd.merge(df_claves, df_fraccionados, on='CLAVEUC', how='left')
     df_feature.pc_fraccionados = df_feature.pc_fraccionados.fillna(0)
 

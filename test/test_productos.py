@@ -1,12 +1,69 @@
 import pandas as pd
 
 from features.productos import (
+    contratos_fraccionados,
     falta_transparencia_pnt,
     plazos_cortos
 )
 
 
 class TestProductos:
+    def test_contratos_fraccionados(self):
+        df_test_procs = pd.DataFrame(data=[
+            ['001', 'ADJUDICACION DIRECTA', 'SERVICIOS', '2018-01-01', 'Empresa A', '001-AD-0001/2018', 1000.0],
+            ['001', 'ADJUDICACION DIRECTA', 'SERVICIOS', '2018-01-01', 'Evil corp', '001-AD-0002/2018', 500.0],
+            ['001', 'ADJUDICACION DIRECTA', 'SERVICIOS', '2018-01-04', 'Evil corp', '001-AD-0003/2018', 600.0],
+            ['001', 'LICITACION PUBLICA', 'SERVICIOS', '2018-01-01', 'Empresa A', '001-LP-0004/2018', 5000.0],
+            ['001', 'ADJUDICACION DIRECTA', 'SERVICIOS', '2018-02-01', 'Empresa A', '001-AD-0005/2018', 1000.0],
+            ['001', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', '2018-02-01', 'Empresa A', '001-AD-0006/2018', 2000.0],
+
+            ['002', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', '2018-02-01', 'Empresa A', '002-AD-0001/2018', 200.0],
+            ['002', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', '2018-02-01', 'Empresa A', '002-AD-0002/2018', 300.0],
+            ['002', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', '2018-02-01', 'Empresa A', '002-AD-0003/2018', 400.0],
+            ['002', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', '2018-07-02', 'Evil corp', '002-AD-0004/2018', 600.0],
+            ['002', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', '2018-07-04', 'Evil corp', '002-AD-0005/2018', 1600.0],
+            ['002', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', '2018-07-05', 'Evil corp', '002-AD-0006/2018', 200.0]
+        ], columns=([
+            'CLAVEUC', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'FECHA_INICIO',
+            'PROVEEDOR_CONTRATISTA', 'NUMERO_PROCEDIMIENTO', 'IMPORTE_PESOS'
+        ]))
+
+        df_test_procs.FECHA_INICIO = pd.to_datetime(df_test_procs.FECHA_INICIO)
+
+        df_maximos = pd.DataFrame(data=[
+            [2018, 'ADQUISICIONES', 2000, 10000],
+            [2018, 'SERVICIOS', 1000, 10000],
+            [2019, 'ADQUISICIONES', 1100, 11000],
+            [2019, 'SERVICIOS', 1100, 11000]
+        ], columns=['Año', 'Tipo de contratación', 'Adjudicación directa', 'INV3'])
+
+        variables = pd.DataFrame(data=[
+            [1, 1000, 1000, 1, False],
+            # Evil corp se excede con la UC 001 en la primera semana
+            [1, 1100, 1000, 2, True],
+            [1, 1100, 1000, 2, True],
+            [None, None, None, None, None],
+            # La empresa A en Servicios no se excede
+            [5, 1000, 1000, 1, False],
+            # tampoco en Adquisiciones porque lo contratan otras UC
+            [5, 2000, 2000, 1, False],
+
+            [5, 900, 2000, 3, False],
+            [5, 900, 2000, 3, False],
+            [5, 900, 2000, 3, False],
+            # La empresa Evil Corp excedió en Adquisiciones semanales con la UC 002
+            [27, 2400, 2000, 3, True],
+            [27, 2400, 2000, 3, True],
+            [27, 2400, 2000, 3, True]
+        ], columns=[
+            'semana', 'monto_semanal_empresa', 'maximo_permitido',
+            'contratos_semanales_empresa', 'fraccionado'
+        ])
+
+        df_expected = pd.concat([df_test_procs, variables], axis=1)
+        res = contratos_fraccionados(df_test_procs, df_maximos, year=2018)
+        pd.testing.assert_frame_equal(res, df_expected)
+
     def test_promedio_datos_faltantes_por_contrato_pnt(self):
         common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'PROVEEDOR_CONTRATISTA']
         sipot_cols = (['LIGA_AUTORIZACION', 'REF_COTIZACIONES', 'LIGA_CONTRATO'] +

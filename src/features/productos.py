@@ -6,6 +6,78 @@ import numpy as np
 DataFrame = pd.DataFrame
 
 
+def contratos_fraccionados(df_procs: DataFrame,
+                           df_maximos: DataFrame, **kwargs) -> DataFrame:
+    """
+    Calcula indicadores para encontrar si se fraccionaron contratos
+    para no rebasar el monto permitido en una AD.
+    A nivel contrato se calcula:
+    1. Número de la semana por cada contrato.
+    2. Monto acumulado de contratos AD en el mismo día por empresa por UC.
+    3. Monto acumulado de contratos AD en la misma semana por empresa por UC
+    4. Número de contratos AD por semana por empresa por UC.
+    5. Número de contratos AD por día por empresa por UC.
+    6. Contrato fraccionado?
+    """
+    if 'year' in kwargs:
+        años_validos = set([kwargs['year']])
+    else:
+        raise TypeError('Falta especificar año')
+
+    # Máximos del año para Adjudicación directa por distintos Tipos
+    df_maximos = df_maximos.loc[df_maximos.Año.isin(años_validos)]
+    df_maximos = df_maximos[['Tipo de contratación', 'Adjudicación directa']]
+    df_maximos.rename(columns={'Adjudicación directa': 'maximo_permitido'}, inplace=True)
+
+    # Sólo ADJUDICACION DIRECTA
+    df = df_procs.copy()
+    df = df.loc[df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA']
+
+    # 1. Número de la semana por cada contrato
+    df = df.assign(semana=df.FECHA_INICIO.dt.week)
+
+    # 2. Monto acumulado de contratos AD en el mismo día por empresa por UC.
+    # TODO
+
+    # 3. Monto acumulado de contratos AD en la misma semana por empresa por UC
+    group_keys = ['CLAVEUC', 'PROVEEDOR_CONTRATISTA', 'TIPO_CONTRATACION', 'semana']
+    monto_semanal = (df.groupby(group_keys, as_index=False)
+                     .IMPORTE_PESOS.sum()
+                     .rename(columns={'IMPORTE_PESOS': 'monto_semanal_empresa'}))
+
+    # 4. Número de contratos AD por semana por empresa por UC.
+    contratos_semanales = (df.groupby(group_keys, as_index=False)
+                           .NUMERO_PROCEDIMIENTO.count()
+                           .rename(columns={'NUMERO_PROCEDIMIENTO': 'contratos_semanales_empresa'}))
+
+    # 5. Número de contratos AD por día por empresa por UC.
+    # TODO
+
+    # 6. Contrato fraccionado?
+    # Si en una semana una UC otorga a una empresa más de 1 contrato AD y el
+    # monto acumulado supera máximos autorizados para AD en ese año.
+
+    # Obtiene los máximos
+    monto_semanal = pd.merge(monto_semanal, df_maximos,
+                             left_on='TIPO_CONTRATACION',
+                             right_on='Tipo de contratación')
+
+    monto_semanal.drop('Tipo de contratación', axis=1, inplace=True)
+
+    # Marca los que exceden
+    monto_semanal = pd.merge(monto_semanal, contratos_semanales)
+    fraccionado = (
+        (monto_semanal.monto_semanal_empresa > monto_semanal['maximo_permitido']) &
+        (monto_semanal.contratos_semanales_empresa > 1))
+    monto_semanal = monto_semanal.assign(fraccionado=fraccionado)
+
+    # Agrega las variables 3, 4, y 6 al resultado
+    df = df.merge(monto_semanal)
+
+    # Mezcla con la tabla de procedimientos original
+    return df_procs.merge(df, how='left')
+
+
 def falta_transparencia_pnt(df_procs: DataFrame,
                             df_sipot: DataFrame) -> DataFrame:
     """
