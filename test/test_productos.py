@@ -7,6 +7,30 @@ from features.productos import (
     plazos_cortos
 )
 
+# Columnas comunes para cruces entre bases
+common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'PROVEEDOR_CONTRATISTA']
+
+# Mock de tabla de participantes
+df_test_parts = pd.DataFrame(data=[
+    # Adjudicación con 3 participantes
+    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', 1000, 'GANADOR', 320000],
+    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/02/01', 1000, 'PERDEDOR', 320000],
+    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa D', '2018/02/01', 1000, 'PERDEDOR', 320000],
+    # Adjudicación con un solo participante
+    ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/03/01', 2000, 'GANADOR', 320001],
+    # Adjudicación con 2 participantes
+    ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/04/01', 2000, 'GANADOR', 320002],
+    ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/04/01', 2000, 'GANADOR', 320002],
+    # Licitación pública con un solo participante
+    ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', 9000, 'GANADOR', 320003],
+    # Licitación pública con tres participantes
+    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/06/01', 5000, 'GANADOR', 320004],
+    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/06/01', 5000, 'PERDEDOR', 320004],
+    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/06/01', 5000, 'PERDEDOR', 320004],
+    # Adjudicación directa con un solo participante
+    ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', 3000, 'GANADOR', 320005]
+], columns=common + ['FECHA_INICIO', 'PRECIO_TOTAL', 'ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES'])
+
 
 class TestProductos:
     def test_contratos_fraccionados(self):
@@ -67,7 +91,6 @@ class TestProductos:
         pd.testing.assert_frame_equal(res, df_expected)
 
     def test_convenios_entre_entes_publicos(self):
-        common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'PROVEEDOR_CONTRATISTA']
         df_test_procs = pd.DataFrame(data=[
             ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '001', 1000],
             ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '001', 2000],
@@ -101,7 +124,6 @@ class TestProductos:
         pd.testing.assert_frame_equal(res, df_expected)
 
     def test_promedio_datos_faltantes_por_contrato_pnt(self):
-        common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'PROVEEDOR_CONTRATISTA']
         sipot_cols = (['LIGA_AUTORIZACION', 'REF_COTIZACIONES', 'LIGA_CONTRATO'] +
                       ['LIGA_CONVOCATORIA', 'LIGA_FALLO', 'LIGA_FINIQUITO'])
 
@@ -164,14 +186,6 @@ class TestProductos:
         pd.testing.assert_frame_equal(res, df_expected)
 
     def test_plazos_cortos(self):
-        common = [
-            'NUMERO_PROCEDIMIENTO',
-            'TIPO_PROCEDIMIENTO',
-            'TIPO_CONTRATACION',
-            'PROVEEDOR_CONTRATISTA',
-            'FECHA_INICIO'
-        ]
-
         df_test_procs = pd.DataFrame(data=[
             ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', '2018/01/01', '2018/01/04', 1000],
             ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/03/01', '2018/02/01', '2018/02/28', 2000],
@@ -182,27 +196,7 @@ class TestProductos:
             # No reportadas en PNT
             ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa F', '2018/08/01', '2018/07/01', '2018/07/04', 3000],
             ['002-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa G', '2018/08/01', '2018/06/01', '2018/07/30', 3000]
-        ], columns=common + ['PROC_F_PUBLICACION', 'FECHA_APERTURA_PROPOSICIONES', 'IMPORTE_PESOS'])
-
-        df_test_parts = pd.DataFrame(data=[
-            # Adjudicación con 3 participantes
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', 1000, 'GANADOR', 320000],
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/02/01', 1000, 'PERDEDOR', 320000],
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa D', '2018/02/01', 1000, 'PERDEDOR', 320000],
-            # Adjudicación con un solo participante
-            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/03/01', 2000, 'GANADOR', 320001],
-            # Adjudicación con 2 participantes
-            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/04/01', 2000, 'GANADOR', 320002],
-            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/04/01', 2000, 'GANADOR', 320002],
-            # Licitación pública con un solo participante
-            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', 9000, 'GANADOR', 320003],
-            # Licitación pública con tres participantes
-            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/06/01', 5000, 'GANADOR', 320004],
-            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/06/01', 5000, 'PERDEDOR', 320004],
-            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/06/01', 5000, 'PERDEDOR', 320004],
-            # Adjudicación directa con un solo participante
-            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', 3000, 'GANADOR', 320005]
-        ], columns=common + ['PRECIO_TOTAL', 'ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES'])
+        ], columns=common + ['FECHA_INICIO', 'PROC_F_PUBLICACION', 'FECHA_APERTURA_PROPOSICIONES', 'IMPORTE_PESOS'])
 
         # Transforma columnas de fechas
         for c in ['FECHA_INICIO', 'PROC_F_PUBLICACION', 'FECHA_APERTURA_PROPOSICIONES']:
