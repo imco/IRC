@@ -293,11 +293,15 @@ def procesar_dataframe_sipot(df: DataFrame, type: str) -> DataFrame:
         df.rename(columns=col_mapping, inplace=True)
         df = df[col_mapping.values()]
 
+    # Columnas a limpiar
     cols = [
         'PROVEEDOR_CONTRATISTA',
         'TIPO_CONTRATACION',
         'TIPO_PROCEDIMIENTO'
     ]
+
+    if type == 'adjudicaciones':
+        cols.append('MOTIVOS_ADJUDICACION')
 
     # Elimina caracteres no ascii
     for col in cols:
