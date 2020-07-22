@@ -188,6 +188,140 @@ def falta_transparencia_pnt(df_procs: DataFrame,
     return df_feature
 
 
+def colusion(df_procs: DataFrame,
+             df_parts: DataFrame) -> DataFrame:
+    """
+    Calcula variables para detectar colusión.
+
+    Utiliza la tabla de participantes para calcular las variables,
+    y regresa una mezcla con la tabla principal de procedimientos.
+
+    Los cálculos se hacen sobre participaciones de IR y LP con más
+    de un participante.
+    """
+
+    """
+    1. Participaciones totales por empresa.
+    Número de participaciones totales (IR + LP) por cada empresa por UC por año.
+    """
+    # Selecciona el subconjunto de participaciones de IR|LP con más de un participante
+    is_lic = ((df_parts['TIPO_PROCEDIMIENTO'] == 'LICITACION PUBLICA') |
+              (df_parts['TIPO_PROCEDIMIENTO'] == 'INVITACION A CUANDO MENOS TRES'))
+    by_ref = (df_parts.groupby('REF_PARTICIPANTES').size())
+    con_participantes = df_parts.REF_PARTICIPANTES.isin(by_ref[by_ref > 1].index)
+
+    df_parts_lic = df_parts.copy()[is_lic & con_participantes]
+
+    participaciones_totales_empresa = (df_parts_lic.groupby(['PROVEEDOR_CONTRATISTA'])
+                                       .NUMERO_PROCEDIMIENTO.count()
+                                       .reset_index()
+                                       .rename(columns={'NUMERO_PROCEDIMIENTO': 'participaciones_totales_empresa'}))
+
+    """
+    2. Número participaciones en conjunto de la empresa ganadora y las participantes.
+    Número participaciones en conjunto de la empresa ganadora y cada una de las empresas
+    participantes por proceso por UC por año.
+    """
+
+    # Columnas para agrupar participaciones
+    p_cols = [c for c in id_cols if c != 'PROVEEDOR_CONTRATISTA']
+
+    # Creamos filas por cada instancia de ganador vs perdedor por procedimiento
+    # i.e. si tenemos un ganador y 2 perdedores, entonces tendremos 2 filas
+    W = df_parts_lic[df_parts_lic.ESTATUS_DE_PROPUESTA == 'GANADOR']
+    L = df_parts_lic[df_parts_lic.ESTATUS_DE_PROPUESTA == 'PERDEDOR']
+    procs_con_tuplas = (pd.merge(W, L, on=p_cols, how='left')
+                        .rename(columns={
+                            'PROVEEDOR_CONTRATISTA_x': 'GANADOR',
+                            'PROVEEDOR_CONTRATISTA_y': 'PERDEDOR',
+                            'REF_PARTICIPANTES_x': 'REF_PARTICIPANTES'
+                        })
+                        .loc[:, p_cols + ['REF_PARTICIPANTES', 'GANADOR', 'PERDEDOR']])
+
+    # Cuenta las ocurrencias de cada tupla encontrada en cada proceso
+    parts_por_tupla = (pd.crosstab(procs_con_tuplas['GANADOR'], procs_con_tuplas['PERDEDOR'])
+                       .stack()
+                       .reset_index()
+                       .rename(columns={0: 'num_participaciones_en_conjunto'}))
+
+    en_conjunto = pd.merge(procs_con_tuplas,
+                           parts_por_tupla,
+                           left_on=['GANADOR', 'PERDEDOR'],
+                           right_on=['GANADOR', 'PERDEDOR'])
+
+    en_conjunto = (en_conjunto.groupby(p_cols + ['GANADOR'])
+                   .num_participaciones_en_conjunto.sum()
+                   .reset_index()
+                   .rename(columns={'GANADOR': 'PROVEEDOR_CONTRATISTA'}))
+
+    """
+    3. Jaccard por proceso de compra
+    Proporción en la que dos o más empresas participan de manera conjunta,
+    en función del total de sus participaciones.
+    # de participaciones conjuntas / (
+        # de participaciones empresa ganadora + # de participaciones empresa n -
+        # de participaciones conjuntas entre ganadora y n
+    ) * 100
+
+    Nota: Este campo es temporal para calcular la Participación conjunta (variable 4).
+    """
+
+    # Unimos la info de procesos que tiene las variaciones de ganador-perdedor
+    # con las participaciones conjuntas correspondientes.
+    tuplas_de_jaccard = pd.merge(procs_con_tuplas, parts_por_tupla)
+    # Luego a través de las llaves GANADOR y PERDEDOR trae la cuenta total de cada empresa
+    tuplas_de_jaccard = (tuplas_de_jaccard.merge(participaciones_totales_empresa,
+                                                 left_on='GANADOR',
+                                                 right_on='PROVEEDOR_CONTRATISTA',
+                                                 how='left')
+                         .drop('PROVEEDOR_CONTRATISTA', axis=1)
+                         .rename(columns={'participaciones_totales_empresa': 'participaciones_totales_ganador'}))
+    tuplas_de_jaccard = (tuplas_de_jaccard.merge(participaciones_totales_empresa,
+                                                 left_on='PERDEDOR',
+                                                 right_on='PROVEEDOR_CONTRATISTA',
+                                                 how='left')
+                         .drop('PROVEEDOR_CONTRATISTA', axis=1)
+                         .rename(columns={'participaciones_totales_empresa': 'participaciones_totales_perdedor'}))
+
+    tuplas_de_jaccard['jaccard'] = (tuplas_de_jaccard.num_participaciones_en_conjunto.divide(
+        tuplas_de_jaccard.participaciones_totales_ganador +
+        tuplas_de_jaccard.participaciones_totales_perdedor -
+        tuplas_de_jaccard.num_participaciones_en_conjunto)) * 100
+
+    """
+    4. Participación conjunta (colusión)
+    (Suma de Índices de Jaccard entre la empresa ganadora G y
+     cada una de las empresas participantes P por proceso /
+        Número de empresas que presentaron propuesta - 1) * 100
+    """
+    perdedores_por_proceso = (tuplas_de_jaccard.groupby(p_cols + ['GANADOR'])
+                              .REF_PARTICIPANTES.count()
+                              .reset_index()
+                              .rename(columns={'REF_PARTICIPANTES': 'perdedores_por_proceso'}))
+
+    res = (tuplas_de_jaccard.groupby(p_cols + ['GANADOR'])
+           .jaccard.sum()
+           .reset_index()
+           .rename(columns={'jaccard': 'suma_jaccard'})
+           .merge(perdedores_por_proceso))
+
+    res['colusion'] = res.suma_jaccard.divide(res.perdedores_por_proceso) * 100
+
+    """
+    5. Propuestas artificiales
+    Empresas participantes con match en base de datos del SAT de RFCs fantasma
+    """
+    # TODO
+    res['propuestas_artificiales'] = 0
+
+    # Hace las ultimas concatenaciones y prepara el formato de regreso
+    res.rename(columns={'GANADOR': 'PROVEEDOR_CONTRATISTA'}, inplace=True)
+    res = res.merge(participaciones_totales_empresa, how='left')
+    res = res.merge(en_conjunto, how='left')
+
+    return pd.merge(df_procs, res, how='left')
+
+
 def plazos_cortos(df_procs: DataFrame,
                   df_parts: DataFrame) -> DataFrame:
     """

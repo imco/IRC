@@ -1,6 +1,7 @@
 import pandas as pd
 
 from features.productos import (
+    colusion,
     contratos_fraccionados,
     convenios_entre_entes_publicos,
     falta_transparencia_pnt,
@@ -28,8 +29,16 @@ df_test_parts = pd.DataFrame(data=[
     ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/06/01', 5000, 'PERDEDOR', 320004],
     ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/06/01', 5000, 'PERDEDOR', 320004],
     # Adjudicación directa con un solo participante
-    ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', 3000, 'GANADOR', 320005]
+    ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', 3000, 'GANADOR', 320005],
+    # Otras Licitaciones Públicas
+    ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', 9000, 'GANADOR', 320006],
+    ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/01', 9000, 'PERDEDOR', 320006],
+    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/09', 8000, 'GANADOR', 320007],
+    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/09', 8000, 'PERDEDOR', 320007],
+    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/05/09', 8000, 'PERDEDOR', 320007]
 ], columns=common + ['FECHA_INICIO', 'PRECIO_TOTAL', 'ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES'])
+
+df_test_parts.FECHA_INICIO = pd.to_datetime(df_test_parts.FECHA_INICIO)
 
 
 class TestProductos:
@@ -185,6 +194,56 @@ class TestProductos:
         res = falta_transparencia_pnt(df_test_procs, df_test_sipot)
         pd.testing.assert_frame_equal(res, df_expected)
 
+    def test_colusion(self):
+        df_test_procs = pd.DataFrame(data=[
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A'],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B'],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B'],
+            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C'],
+            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D'],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B'],
+            # No reportadas en PNT
+            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa F'],
+            ['002-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa G'],
+            # Otras Licitaciones Públicas
+            ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C'],
+            ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C']
+        ], columns=common)
+
+        _jaccard = lambda a, b, c: c / (a + b - c) * 100
+        _colusion = lambda j, N: (sum(j) / (N - 1)) * 100
+
+        # Sólo hubo 3 LP con más de un licitante
+        df_variables = pd.DataFrame(data=[
+            [None, None, None, None, None],
+            [None, None, None, None, None],
+            [None, None, None, None, None],
+            [None, None, None, None, None],
+            # La empresa ganadora D aparece 2 veces en la base
+            # Ganándole a B y C
+            [50, 2, _colusion([_jaccard(2, 3, 1) + _jaccard(2, 3, 1)], 3),  0, 2, 2],
+            # Otra Adjudicación ignorada
+            [None, None, None, None, None],
+            # Dos procesos que no estan en la PNT
+            [None, None, None, None, None],
+            [None, None, None, None, None],
+            # La empresa ganadora C aparece 3 veces en la base
+            # y le ha ganado a B dos veces y perdido contra D una
+            [50, 1, _colusion([_jaccard(3, 3, 2)], 2),                      0, 3, 2],
+            [75, 2, _colusion([_jaccard(3, 3, 2) + _jaccard(3, 2, 1)], 3),  0, 3, 3]
+        ], columns=[
+            'suma_jaccard',
+            'perdedores_por_proceso',
+            'colusion',
+            'propuestas_artificiales',
+            'participaciones_totales_empresa',
+            'num_participaciones_en_conjunto'
+        ])
+
+        df_expected = pd.concat([df_test_procs, df_variables], axis=1)
+        res = colusion(df_test_procs, df_test_parts)
+        pd.testing.assert_frame_equal(res, df_expected)
+
     def test_plazos_cortos(self):
         df_test_procs = pd.DataFrame(data=[
             ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', '2018/01/01', '2018/01/04', 1000],
@@ -201,7 +260,6 @@ class TestProductos:
         # Transforma columnas de fechas
         for c in ['FECHA_INICIO', 'PROC_F_PUBLICACION', 'FECHA_APERTURA_PROPOSICIONES']:
             df_test_procs[c] = pd.to_datetime(df_test_procs[c])
-        df_test_parts.FECHA_INICIO = pd.to_datetime(df_test_parts.FECHA_INICIO)
 
         # Calcula variables
         res = plazos_cortos(df_test_procs, df_test_parts)
