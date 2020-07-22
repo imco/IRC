@@ -5,6 +5,7 @@ from features.productos import (
     contratos_fraccionados,
     convenios_entre_entes_publicos,
     falta_transparencia_pnt,
+    ganador_mas_barato,
     plazos_cortos
 )
 
@@ -14,7 +15,7 @@ common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'PR
 # Mock de tabla de participantes
 df_test_parts = pd.DataFrame(data=[
     # Adjudicación con 3 participantes
-    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', 1000, 'GANADOR', 320000],
+    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', 1200, 'GANADOR', 320000],
     ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/02/01', 1000, 'PERDEDOR', 320000],
     ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa D', '2018/02/01', 1000, 'PERDEDOR', 320000],
     # Adjudicación con un solo participante
@@ -31,11 +32,11 @@ df_test_parts = pd.DataFrame(data=[
     # Adjudicación directa con un solo participante
     ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', 3000, 'GANADOR', 320005],
     # Otras Licitaciones Públicas
-    ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', 9000, 'GANADOR', 320006],
+    ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', 9500, 'GANADOR', 320006],
     ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/01', 9000, 'PERDEDOR', 320006],
     ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/09', 8000, 'GANADOR', 320007],
-    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/09', 8000, 'PERDEDOR', 320007],
-    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/05/09', 8000, 'PERDEDOR', 320007]
+    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/09', 8010, 'PERDEDOR', 320007],
+    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/05/09', 8020, 'PERDEDOR', 320007]
 ], columns=common + ['FECHA_INICIO', 'PRECIO_TOTAL', 'ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES'])
 
 df_test_parts.FECHA_INICIO = pd.to_datetime(df_test_parts.FECHA_INICIO)
@@ -248,6 +249,43 @@ class TestProductos:
 
         df_expected = pd.concat([df_test_procs, df_variables], axis=1)
         res = colusion(df_test_procs, df_test_parts, df_test_fantasma)
+        pd.testing.assert_frame_equal(res, df_expected)
+
+    def test_ganador_mas_barato(self):
+        df_test_procs = pd.DataFrame(data=[
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A'],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B'],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B'],
+            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C'],
+            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D'],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B'],
+            # No reportadas en PNT
+            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa F'],
+            ['002-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa G'],
+            # Otras Licitaciones Públicas
+            ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C'],
+            ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C']
+        ], columns=common)
+
+        df_variables = pd.DataFrame(data=[
+            ['2018/02/01', 1200, 1000, 0],
+            ['2018/03/01', 2000, 2000, 1],
+            ['2018/04/01', 2000, 2000, 1],
+            ['2018/05/01', 9000, 9000, 1],
+            ['2018/06/01', 5000, 5000, 1],
+            ['2018/07/01', 3000, 3000, 1],
+            [],
+            [],
+            ['2018/05/01', 9500, 9000, 0],
+            ['2018/05/09', 8000, 8000, 1]
+        ], columns=[
+            'FECHA_INICIO', 'PRECIO_TOTAL', 'PRECIO_MAS_BAJO', 'mas_barato'
+        ])
+
+        df_variables['FECHA_INICIO'] = pd.to_datetime(df_variables['FECHA_INICIO'])
+
+        df_expected = pd.concat([df_test_procs, df_variables], axis=1)
+        res = ganador_mas_barato(df_test_procs, df_test_parts)
         pd.testing.assert_frame_equal(res, df_expected)
 
     def test_plazos_cortos(self):

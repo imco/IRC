@@ -350,6 +350,25 @@ def colusion(df_procs: DataFrame,
     return pd.merge(df_procs, res, how='left')
 
 
+def ganador_mas_barato(df_procs: DataFrame,
+                       df_parts: DataFrame) -> DataFrame:
+    """
+    Revisa si la empresa ganadora fue la propuesta más baja.
+    """
+    minimos = (df_parts.groupby('REF_PARTICIPANTES')
+               .PRECIO_TOTAL.min()
+               .reset_index()
+               .rename(columns={'PRECIO_TOTAL':'PRECIO_MAS_BAJO'}))
+
+    df = pd.merge(df_parts, minimos, how='left')
+    ganador = df.ESTATUS_DE_PROPUESTA == 'GANADOR'
+    masbara = df.PRECIO_TOTAL == df.PRECIO_MAS_BAJO
+    df['mas_barato'] = (ganador & masbara).astype(int)
+
+    df.drop(['ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES'], axis=1, inplace=True)
+    return pd.merge(df_procs, df, how='left')
+
+
 def plazos_cortos(df_procs: DataFrame,
                   df_parts: DataFrame) -> DataFrame:
     """
