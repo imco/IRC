@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+"""
+Los productos son nuevos subíndices calculados
+a nivel contrato y año.
+
+Algunos indicadores del IRC hacen uso de estos
+cálculos pero los agrupan a nivel UC.
+"""
+
 import pandas as pd
 import numpy as np
 
