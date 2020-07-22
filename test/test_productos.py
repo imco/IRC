@@ -215,18 +215,18 @@ class TestProductos:
 
         # Sólo hubo 3 LP con más de un licitante
         df_variables = pd.DataFrame(data=[
-            [None, None, None, None, None],
-            [None, None, None, None, None],
-            [None, None, None, None, None],
-            [None, None, None, None, None],
+            [],
+            [],
+            [],
+            [],
             # La empresa ganadora D aparece 2 veces en la base
             # Ganándole a B y C
             [50, 2, _colusion([_jaccard(2, 3, 1) + _jaccard(2, 3, 1)], 3),  0, 2, 2],
             # Otra Adjudicación ignorada
-            [None, None, None, None, None],
+            [],
             # Dos procesos que no estan en la PNT
-            [None, None, None, None, None],
-            [None, None, None, None, None],
+            [],
+            [],
             # La empresa ganadora C aparece 3 veces en la base
             # y le ha ganado a B dos veces y perdido contra D una
             [50, 1, _colusion([_jaccard(3, 3, 2)], 2),                      0, 3, 2],
