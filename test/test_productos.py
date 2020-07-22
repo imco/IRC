@@ -195,6 +195,12 @@ class TestProductos:
         pd.testing.assert_frame_equal(res, df_expected)
 
     def test_colusion(self):
+        df_test_fantasma = pd.DataFrame(data={
+            'RFC': ['D000'],
+            'PROVEEDOR_CONTRATISTA': ['Empresa D'],
+            'Publicación página SAT definitivos': ['25/05/2018']
+        })
+
         df_test_procs = pd.DataFrame(data=[
             ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A'],
             ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B'],
@@ -221,7 +227,7 @@ class TestProductos:
             [],
             # La empresa ganadora D aparece 2 veces en la base
             # Ganándole a B y C
-            [50, 2, _colusion([_jaccard(2, 3, 1) + _jaccard(2, 3, 1)], 3),  0, 2, 2],
+            [50, 2, _colusion([_jaccard(2, 3, 1) + _jaccard(2, 3, 1)], 3),  2, 2, 1],
             # Otra Adjudicación ignorada
             [],
             # Dos procesos que no estan en la PNT
@@ -229,19 +235,19 @@ class TestProductos:
             [],
             # La empresa ganadora C aparece 3 veces en la base
             # y le ha ganado a B dos veces y perdido contra D una
-            [50, 1, _colusion([_jaccard(3, 3, 2)], 2),                      0, 3, 2],
-            [75, 2, _colusion([_jaccard(3, 3, 2) + _jaccard(3, 2, 1)], 3),  0, 3, 3]
+            [50, 1, _colusion([_jaccard(3, 3, 2)], 2),                      3, 2, None],
+            [75, 2, _colusion([_jaccard(3, 3, 2) + _jaccard(3, 2, 1)], 3),  3, 3, 1]
         ], columns=[
             'suma_jaccard',
             'perdedores_por_proceso',
             'colusion',
-            'propuestas_artificiales',
             'participaciones_totales_empresa',
-            'num_participaciones_en_conjunto'
+            'num_participaciones_en_conjunto',
+            'propuestas_artificiales'
         ])
 
         df_expected = pd.concat([df_test_procs, df_variables], axis=1)
-        res = colusion(df_test_procs, df_test_parts)
+        res = colusion(df_test_procs, df_test_parts, df_test_fantasma)
         pd.testing.assert_frame_equal(res, df_expected)
 
     def test_plazos_cortos(self):

@@ -189,7 +189,8 @@ def falta_transparencia_pnt(df_procs: DataFrame,
 
 
 def colusion(df_procs: DataFrame,
-             df_parts: DataFrame) -> DataFrame:
+             df_parts: DataFrame,
+             df_fantasma: DataFrame) -> DataFrame:
     """
     Calcula variables para detectar colusión.
 
@@ -309,15 +310,42 @@ def colusion(df_procs: DataFrame,
 
     """
     5. Propuestas artificiales
-    Empresas participantes con match en base de datos del SAT de RFCs fantasma
+    Empresas participantes con match en base de datos del SAT de RFCs fantasma.
+
+    Revisamos tanto ganador como perdedores del proceso.
     """
-    # TODO
-    res['propuestas_artificiales'] = 0
+    con_propuestas_artificiales = (df_parts_lic.merge(df_fantasma)
+                                   .rename(columns={'RFC': 'Fantasma'})
+                                   .drop('Publicación página SAT definitivos', axis=1))
+    tuplas_de_jaccard = (tuplas_de_jaccard.merge(con_propuestas_artificiales,
+                                                 left_on='GANADOR',
+                                                 right_on='PROVEEDOR_CONTRATISTA',
+                                                 how='left')
+                           .drop('PROVEEDOR_CONTRATISTA', axis=1)
+                           .rename(columns={'Fantasma': 'fantasma_ganador'}))
+    tuplas_de_jaccard = (tuplas_de_jaccard.merge(con_propuestas_artificiales,
+                                                 left_on='PERDEDOR',
+                                                 right_on='PROVEEDOR_CONTRATISTA',
+                                                 how='left')
+                           .drop('PROVEEDOR_CONTRATISTA', axis=1)
+                           .rename(columns={'Fantasma': 'fantasma_perdedor'}))
+    tuplas_de_jaccard.fantasma_ganador = tuplas_de_jaccard.fantasma_ganador.notna().astype(int)
+    tuplas_de_jaccard.fantasma_perdedor = tuplas_de_jaccard.fantasma_perdedor.notna().astype(int)
+    tuplas_de_jaccard['propuestas_artificiales'] = (tuplas_de_jaccard.fantasma_ganador +
+                                                    tuplas_de_jaccard.fantasma_perdedor)
+
+    # Ahora agregamos por proceso la suma de las propuestas artificiales que
+    # pudieron haber entrado tanto a través del ganador como de los perdedores.
+    procs_con_artificiales = (tuplas_de_jaccard.groupby(p_cols + ['REF_PARTICIPANTES'])
+                              .propuestas_artificiales.sum()
+                              .reset_index()
+                              .drop('REF_PARTICIPANTES', axis=1))
 
     # Hace las ultimas concatenaciones y prepara el formato de regreso
     res.rename(columns={'GANADOR': 'PROVEEDOR_CONTRATISTA'}, inplace=True)
     res = res.merge(participaciones_totales_empresa, how='left')
     res = res.merge(en_conjunto, how='left')
+    res = res.merge(procs_con_artificiales, how='left')
 
     return pd.merge(df_procs, res, how='left')
 
