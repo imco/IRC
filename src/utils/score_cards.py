@@ -24,7 +24,8 @@ def escalar_features(df: DataFrame,
                      rango: Tuple[int, int]) -> DataFrame:
     """Se escalan los features de 0 a 100"""
     for col in cols:
-        x = df[col].values
+        # Es importante reemplazar INF por NAN para que sean ignorados
+        x = df[col].replace([np.inf, -np.inf], np.nan).values
         data_min = np.nanmin(x)
         data_max = np.nanmax(x)
         data_range = data_max - data_min
