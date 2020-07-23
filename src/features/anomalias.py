@@ -690,8 +690,7 @@ def pc_adj_directas_excedieron_monto_fraccionado(df: DataFrame,
     Indicador:
         % de contratos AD a una misma empresa que rebasan el monto permitido (UC)
     """
-    fraccionados = (contratos_fraccionados(df, df_maximos, year=kwargs['year'])
-                    .loc[df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA'])
+    fraccionados = contratos_fraccionados(df, df_maximos, year=kwargs['year'])
 
     # Crea tabla que cuenta los procedimientos que excedieron
     uc_cuenta = (fraccionados.groupby(['CLAVEUC', 'fraccionado'])
