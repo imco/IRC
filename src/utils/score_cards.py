@@ -7,6 +7,8 @@ from typing import Tuple, List, Any, Dict, Iterator, Iterable
 from pathlib import Path
 from collections import defaultdict
 from jinja2 import Environment, select_autoescape, FileSystemLoader
+from sklearn.preprocessing import MinMaxScaler
+
 
 DataFrame = pd.DataFrame
 
@@ -31,6 +33,26 @@ def escalar_features(df: DataFrame,
         df.loc[:, col] = pd.Series(data=scaled_value.flatten(),
                                    index=df.index)
     return df
+
+
+def normaliza_columnas(df: DataFrame,
+                       cols,
+                       rango=(0, 100)) -> DataFrame:
+    """
+    Utiliza sklearn.preprocessing.MinMaxScaler para
+    normalizar una serie de columnas de un DataFrame.
+    Por default el rango es de 0 a 100.
+    Regresa una copia del dataframe con las columnas actualizadas.
+    """
+    scaler = MinMaxScaler(rango)
+    scaled = df.copy()
+
+    for c in cols:
+        # Necesitamos hacer los valores un vector para fit
+        X = scaled[c].values.reshape(-1, 1)
+        scaled[c] = pd.Series(scaler.fit_transform(X).flatten(),
+                              index=scaled.index)
+    return scaled
 
 
 def calcular_scores_dependencia(scores: Dict[str, DataFrame],
