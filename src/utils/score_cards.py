@@ -67,7 +67,8 @@ def invierte_relacion_de_columnas(df: DataFrame,
     de un valor cerca de 100 a uno cerca de 0, ya que es una
     característica a penalizar.
 
-    IMPORTANTE que este método se utilice después de normaliza_columnas.
+    IMPORTANTE que este método se utilice después de normaliza_columnas
+    o escalar_features.
 
     Regresa copia de todo el dataframe con las columnas actualizadas.
     """
