@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+
 # Created by Raul Peralta-Lozada (28/09/17)
 import bisect
 from features.productos import falta_transparencia_pnt
@@ -451,6 +452,7 @@ def pc_invitaciones_incompletas(df: DataFrame, **kwargs) -> DataFrame:
             df_feature[i] = 0
 
     df_feature = (df_feature * 100).divide(df_feature.sum(axis=1), axis=0)
+    # Remueve la columna que equivale a tener toda la documentación
     df_feature = df_feature.assign(
         pc_invitaciones_incompletas=df_feature.drop(
             {len(archivos)}, axis=1).sum(axis=1)
@@ -491,6 +493,7 @@ def pc_licitaciones_incompletas(df: DataFrame,
     if len(archivos) not in df_feature.columns:
         raise ValueError('Nadie tuvo los archivos completos')
     df_feature = (df_feature * 100).divide(df_feature.sum(axis=1), axis=0)
+    # Remueve la columna que equivale a tener toda la documentación
     df_feature = df_feature.assign(
         pc_licitaciones_incompletas=df_feature.drop(
             {len(archivos)}, axis=1).sum(axis=1)
@@ -509,7 +512,7 @@ def pc_inconsistencias_en_monto(df_proc: DataFrame,
                                 df_part: DataFrame,
                                 **kwargs) -> DataFrame:
     """
-    Usa tabla de proc y participantes. Obtiene el porcetnaje de
+    Usa tabla de proc y participantes. Obtiene el porcentaje de
     procedimientos en donde el monto es diferente en participantes y
     procedimientos
     Indicador:
