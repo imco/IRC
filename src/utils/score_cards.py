@@ -55,6 +55,29 @@ def normaliza_columnas(df: DataFrame,
     return scaled
 
 
+def invierte_relacion_de_columnas(df: DataFrame,
+                                  cols,
+                                  max=100) -> DataFrame:
+    """
+    Despues de normalizar algunos indicadores deben invertirse
+    con respecto al rango normalizado.
+
+    Esto para poder representar relaciones negativas, p. ej.
+    Un alto % de procedimientos con un solo licitante debe pasar
+    de un valor cerca de 100 a uno cerca de 0, ya que es una
+    característica a penalizar.
+
+    IMPORTANTE que este método se utilice después de normaliza_columnas.
+
+    Regresa copia de todo el dataframe con las columnas actualizadas.
+    """
+    updated = df.copy()
+    for c in cols:
+        updated[c] = max - updated[c]
+
+    return updated
+
+
 def calcular_scores_dependencia(scores: Dict[str, DataFrame],
                                 weight_by: str) -> Dict[str, DataFrame]:
     if weight_by not in {'monto_total', 'conteo_procedimientos'}:
