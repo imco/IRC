@@ -670,7 +670,6 @@ def promedio_datos_faltantes_por_contrato_pnt(df_procs: DataFrame,
     fallas = fallas.assign(total_fallas=fallas.loc[:, fallas_columnas].sum(axis=1))
 
     # Sacamos el promedio por UC
-    df_claves = pd.DataFrame(data=df_procs.CLAVEUC.unique(), columns=['CLAVEUC'])
     df_feature = (fallas.groupby('CLAVEUC', as_index=False)
                   .total_fallas.mean()
                   .rename(columns={'total_fallas': 'promedio_datos_faltantes_por_contrato_pnt'}))

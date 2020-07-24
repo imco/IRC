@@ -149,6 +149,10 @@ def falta_transparencia_pnt(df_procs: DataFrame,
     lp_cols = ['LIGA_CONVOCATORIA', 'LIGA_FALLO', 'LIGA_CONTRATO', 'LIGA_FINIQUITO']
 
     merged = df_procs.merge(df_sipot, on=id_cols, how='left', indicator=True)
+    merged = merged.rename(columns={
+        'FECHA_INICIO_x': 'FECHA_INICIO',
+        'CODIGO_EXPEDIENTE_x': 'CODIGO_EXPEDIENTE'
+    })
 
     # Fallas
     is_adj = merged['TIPO_PROCEDIMIENTO'] == 'ADJUDICACION DIRECTA'
@@ -180,11 +184,12 @@ def falta_transparencia_pnt(df_procs: DataFrame,
         'inconsistencias_publicacion_pnt_compranet'
     ]
 
+    df_feature = pd.concat([merged, fallas], axis=1)
+
     # Va a filtrar columnas utilizadas para los cálculos
     cols = list(df_procs.columns) + list(fallas.columns)
 
-    df_feature = pd.concat([merged, fallas], axis=1)
-    return df_feature[cols]
+    return df_feature.loc[:, cols]
 
 
 def colusion(df_procs: DataFrame,
