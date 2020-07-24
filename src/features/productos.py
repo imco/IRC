@@ -180,12 +180,11 @@ def falta_transparencia_pnt(df_procs: DataFrame,
         'inconsistencias_publicacion_pnt_compranet'
     ]
 
-    # Remueve columnas utilizadas para los cálculos
-    merged.drop(ad_cols + lp_cols + ['PRECIO_TOTAL', '_merge'], axis=1, inplace=True)
+    # Va a filtrar columnas utilizadas para los cálculos
+    cols = list(df_procs.columns) + list(fallas.columns)
 
     df_feature = pd.concat([merged, fallas], axis=1)
-
-    return df_feature
+    return df_feature[cols]
 
 
 def colusion(df_procs: DataFrame,
