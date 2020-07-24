@@ -220,7 +220,6 @@ def pc_licitaciones_nacionales_menor_15_dias(df: DataFrame,
         data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     # Sólo licitaciones nacionales
     tipos_validos = {'LICITACION PUBLICA',
-                     'INVITACION A CUANDO MENOS TRES',
                      'LICITACION PUBLICA CON OSD'}
     df = df.loc[
         (df.CARACTER == 'NACIONAL') &
@@ -274,7 +273,6 @@ def pc_licitaciones_internacionales_menor_20_dias(df: DataFrame,
         data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     # Sólo licitaciones nacionales
     tipos_validos = {'LICITACION PUBLICA',
-                     'INVITACION A CUANDO MENOS TRES',
                      'LICITACION PUBLICA CON OSD'}
     df = df.loc[
         (df.TIPO_PROCEDIMIENTO.isin(tipos_validos)) &
@@ -333,7 +331,6 @@ def pc_licitaciones_internacionales_menor_40_dias(df: DataFrame,
         data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     # Sólo licitaciones nacionales
     tipos_validos = {'LICITACION PUBLICA',
-                     'INVITACION A CUANDO MENOS TRES',
                      'LICITACION PUBLICA CON OSD'}
     df = df.loc[
         (df.TIPO_PROCEDIMIENTO.isin(tipos_validos)) &
