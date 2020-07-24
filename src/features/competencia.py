@@ -17,7 +17,7 @@ def contratos_por_proveedor(df: DataFrame, **kwargs) -> DataFrame:
     Por cada unidad compradora calcula el número de contratos
     por proveedor diferente
     Indicador:
-        Número de participantes distintos por cada 100 procedimientos.
+        Número de empresas ganadoras diferentes por cada 100 contratos
     """
     monto_por_contrato = df.groupby(
         ['DEPENDENCIA', 'CLAVEUC', 'PROVEEDOR_CONTRATISTA',
@@ -498,7 +498,7 @@ def procs_promedio_por_participantes(df: DataFrame,
     Usa tabla participantes. Calcula cuantos procedimientos
     en promedio se dan por participante
     Indicador:
-        Índice de participación
+        Promedio de participantes por procedimiento
     """
     if df.shape[0] == 0:
         return None
@@ -518,7 +518,7 @@ def pc_partipaciones_promedio(df: DataFrame,
     """
     Usa la tabla de participantes
     Indicador:
-        Promedio de participantes por procedimiento
+        Índice de participación
     """
     if df.shape[0] == 0:
         return None
@@ -548,7 +548,7 @@ def procs_por_participantes_unicos(df: DataFrame,
     """
     Usa la tabla de participantes
     Indicador:
-        Número de empresas ganadoras diferentes por cada 100 contratos
+        Número de participantes distintos por cada 100 procedimientos.
     """
     if df.shape[0] == 0:
         return None
