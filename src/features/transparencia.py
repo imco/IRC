@@ -653,9 +653,21 @@ def promedio_datos_faltantes_por_contrato_pnt(df_procs: DataFrame,
     """
     # Usamos los procedimientos como base
     # Consigue las 9 variables y las suma en una nueva columna
+    # Lista copiada de falta_transparencia_pnt
+    fallas_columnas = [
+        'ad_sin_autorizacion',
+        'ad_sin_cotizacion',
+        'ad_sin_contrato',
+        'inv3_lp_sin_convocatoria',
+        'inv3_lp_sin_fallo',
+        'inv3_lp_sin_contrato',
+        'inv3_lp_sin_finiquito',
+        'inconsistencias_monto_pnt_compranet',
+        'inconsistencias_publicacion_pnt_compranet'
+    ]
+
     fallas = df_procs.merge(falta_transparencia_pnt(df_procs, df_sipot))
-    new_cols = [c for c in fallas.columns if c not in df_procs.columns]
-    fallas = fallas.assign(total_fallas=fallas.loc[:, new_cols].sum(axis=1))
+    fallas = fallas.assign(total_fallas=fallas.loc[:, fallas_columnas].sum(axis=1))
 
     # Sacamos el promedio por UC
     df_claves = pd.DataFrame(data=df_procs.CLAVEUC.unique(), columns=['CLAVEUC'])
