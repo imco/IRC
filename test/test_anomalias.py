@@ -10,27 +10,28 @@ from features.anomalias import (
 
 class TestAnomalias:
     def test_pc_inconsistencias_convenios_pnt_compranet(self):
-        common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION']
+        common = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION', 'PROVEEDOR_CONTRATISTA']
         df_test_scrap = pd.DataFrame(data=[
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '001', 0],
-            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '001', 1],
-            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '001', 1],
-            ['001-AD-0004/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '001', 2],
-            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '002', 0],
-            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', '002', 0]
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '001', 0],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '001', 1],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa V', '001', 1],
+            ['001-AD-0004/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa V', '001', 2],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '002', 0],
+            # Ignorado porque no está en el sipot
+            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '002', 0]
         ], columns=common + ['CLAVEUC', 'numero_convenios'])
 
         df_test_sipot = pd.DataFrame(data=[
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 0],
-            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 1],
-            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 2],
-            ['001-AD-0004/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 2],
-            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 1]
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', 0],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', 2],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa V', 2],
+            ['001-AD-0004/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa V', 2],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', 1]
         ], columns=common + ['LIGA_CONVENIO'])
 
         df_expected = pd.DataFrame(data=[
-            ['001', .25],
-            ['002', 1.0]
+            ['001', 0.50], # (2.00) / 4
+            ['002', 1.00]  # (1.00) / 1
         ], columns=['CLAVEUC', 'pc_inconsistencias_convenios_pnt_compranet'])
 
         res = pc_inconsistencias_convenios_pnt_compranet(df_test_scrap, df_test_sipot)

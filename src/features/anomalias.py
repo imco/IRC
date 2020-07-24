@@ -170,11 +170,14 @@ def pc_inconsistencias_convenios_pnt_compranet(df_scraper: DataFrame,
     """
     df_claves = pd.DataFrame(data=df_scraper.CLAVEUC.unique(), columns=['CLAVEUC'])
 
-    cols = ['NUMERO_PROCEDIMIENTO', 'TIPO_PROCEDIMIENTO', 'TIPO_CONTRATACION']
+    cols = [
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'TIPO_CONTRATACION',
+        'PROVEEDOR_CONTRATISTA'
+    ]
 
-    df1 = df_scraper[~df_scraper.duplicated(subset=cols, keep='last')]
-    df2 = df_sipot[~df_sipot.duplicated(subset=cols, keep='last')]
-    merged = pd.merge(df1, df2, on=cols, how='left')
+    merged = pd.merge(df_scraper, df_sipot, on=cols)
 
     # Para que no se hagan matches accidentales de Nones de SIPOT con 0's en Compranet
     merged.numero_convenios.fillna(-2, inplace=True)
