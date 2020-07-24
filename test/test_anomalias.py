@@ -3,6 +3,7 @@ import pandas as pd
 from features.anomalias import (
     pc_inconsistencias_convenios_pnt_compranet,
     procs_con_incumplimiento_de_exclusividad_mipyme,
+    pc_adj_directas_excedieron_monto,
     pc_adj_directas_excedieron_monto_fraccionado
 )
 
@@ -58,6 +59,49 @@ class TestAnomalias:
 
         assert(res.iloc[0].procs_con_incumplimiento_de_exclusividad_mipyme == 2)
         assert(res.iloc[1].procs_con_incumplimiento_de_exclusividad_mipyme == 0)
+
+    def test_pc_adj_directas_excedieron_monto(self):
+        df_test_procs = pd.DataFrame(data=[
+            ['006A2O001', 'ADJUDICACION DIRECTA', 'ARRENDAMIENTOS', 'AA-006A2O001-E65-2017', 1692235, '2018-01-01', 'SINTEG EN MEXICO', 263362.22],
+            ['006A2O001', 'ADJUDICACION DIRECTA', 'ARRENDAMIENTOS', 'AA-006A2O001-E65-2017', 1692246, '2018-01-01', 'IT SERVICES AND SOLUTIONS', 167555.37],
+            ['006A2O001', 'ADJUDICACION DIRECTA', 'ARRENDAMIENTOS', 'AA-006A2O001-E65-2017', 1692222, '2018-01-01', 'BENITO ARTEAGA SILVA', 268293.30],
+            ['006A2O001', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', 'AA-006A2O001-E59-2018', 1988018, '2018-12-12', 'ECO FALH', 1109000.00],
+            ['006A2O001', 'ADJUDICACION DIRECTA', 'ADQUISICIONES', 'AA-006A2O001-E59-2018', 1988014, '2018-12-12', 'SISTEMAS PHOENIX S DE RL', 474328.00]
+        ], columns=([
+            'CLAVEUC',
+            'TIPO_PROCEDIMIENTO',
+            'TIPO_CONTRATACION',
+            'NUMERO_PROCEDIMIENTO',
+            'CODIGO_CONTRATO',
+            'FECHA_INICIO',
+            'PROVEEDOR_CONTRATISTA',
+            'IMPORTE_PESOS'
+        ]))
+
+        df_test_procs.FECHA_INICIO = pd.to_datetime(df_test_procs.FECHA_INICIO)
+
+        df_maximos = pd.DataFrame(data=[
+            [2018, 'ADQUISICIONES',     583480.0, 1e7],
+            [2018, 'SERVICIOS',         583480.0, 1e7],
+            [2018, 'ARRENDAMIENTOS',    583480.0, 1e7]
+        ], columns=['Año', 'Tipo de contratación', 'Adjudicación directa', 'INV3'])
+
+        df_expected = pd.DataFrame(data=[
+            ['006A2O001', 'ADQUISICIONES',   50.0],
+            ['006A2O001', 'SERVICIOS',        0.0],
+            ['006A2O001', 'ARRENDAMIENTOS',   0.0],
+        ], columns=['CLAVEUC', 'TIPO_PROCEDIMIENTO', 'pc_adj_directas_excedieron_monto'])
+
+        acc = []
+        for t in ['ADQUISICIONES', 'SERVICIOS', 'ARRENDAMIENTOS']:
+            res = pc_adj_directas_excedieron_monto(df_test_procs, df_maximos, tipo_contratacion=t, year=2018)
+            if res.empty == False:
+                res.insert(1, 'TIPO_PROCEDIMIENTO', t)
+                acc.append(res)
+
+        res = pd.concat(acc).reset_index().drop('index', axis=1)
+        pd.testing.assert_frame_equal(res, df_expected)
+        return None
 
     def test_pc_adj_directas_excedieron_monto_fraccionado(self):
         df_test_procs = pd.DataFrame(data=[

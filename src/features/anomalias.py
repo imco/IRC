@@ -438,55 +438,57 @@ def pc_adj_directas_excedieron_monto(df: DataFrame,
         (df_maximos.Año.isin(años_validos)) &
         (df_maximos['Tipo de contratación'] == tipo_contratacion)
     ]
+
     df_maximos = df_maximos.drop(['Tipo de contratación', 'INV3'], axis=1)
     df = df.copy()
-    df_claves = pd.DataFrame(
-        data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
-    # Sólo ADJUDICACION DIRECTA
-    df = df.loc[df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA']
+    df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
+
+    # Sólo ADJUDICACION DIRECTA para el Año seleccionado y Tipo de contratación
+    df = df.loc[
+        (df.TIPO_PROCEDIMIENTO == 'ADJUDICACION DIRECTA') &
+        (df.TIPO_CONTRATACION == tipo_contratacion)
+    ]
+
     df = df.assign(Año=df.FECHA_INICIO.dt.year)
     df = df.loc[df.Año.isin(años_validos)]
-    monto_por_contrato = df.groupby(
-        ['CLAVEUC', 'Año', 'PROVEEDOR_CONTRATISTA',
-         'NUMERO_PROCEDIMIENTO', 'CODIGO_CONTRATO'],
-        as_index=False
-    ).IMPORTE_PESOS.sum()
-    monto_por_proc = monto_por_contrato.groupby(
-        ['CLAVEUC', 'Año', 'NUMERO_PROCEDIMIENTO'], as_index=False
-    ).IMPORTE_PESOS.sum()
-    monto_por_proc = pd.merge(monto_por_proc, df_maximos,
-                              on='Año', how='inner')
-    es_mayor_al_max = (monto_por_proc.IMPORTE_PESOS >
-                       monto_por_proc['Adjudicación directa'])
-    monto_por_proc = monto_por_proc.assign(es_mayor_al_max=es_mayor_al_max)
-    monto_por_proc = (monto_por_proc.groupby(['CLAVEUC', 'Año', 'es_mayor_al_max'])
-                                    .NUMERO_PROCEDIMIENTO.nunique()
-                                    .reset_index()
-                                    .pivot_table(index=['CLAVEUC', 'Año'],
-                                                 columns=['es_mayor_al_max'],
-                                                 values='NUMERO_PROCEDIMIENTO')
-                                    .rename(columns={True: 'num_excedidas_si',
-                                                     False: 'num_excedidas_no'})
-                                    .fillna(0))
-    pc_adj_directas_excedidas = monto_por_proc.num_excedidas_si.divide(monto_por_proc.sum(axis=1))
-    monto_por_proc = (monto_por_proc.assign(pc_adj_directas_excedidas=pc_adj_directas_excedidas * 100)
-                                    .reset_index()
-                                    .pivot(index='CLAVEUC',
-                                           columns='Año',
-                                           values='pc_adj_directas_excedidas')
-                                    .fillna(0)
-                                    .assign(pc_adj_excedidas_prom=lambda data: data.mean(axis=1))
-                                    .drop(años_validos, axis=1)
-                                    .reset_index())
-    # left join
-    df_feature = pd.merge(df_claves, monto_por_proc,
-                          on='CLAVEUC', how='left')
-    feature = df_feature.pc_adj_excedidas_prom.fillna(0)
-    df_feature = df_feature.assign(
-        pc_adj_directas_excedieron_monto=feature
-    )
-    df_feature = df_feature.loc[
-                 :, ['CLAVEUC', 'pc_adj_directas_excedieron_monto']]
+
+    # Agrupa por contrato
+    group_cols = [
+        'CLAVEUC',
+        'Año',
+        'PROVEEDOR_CONTRATISTA',
+        'NUMERO_PROCEDIMIENTO',
+        'CODIGO_CONTRATO'
+    ]
+
+    monto_por_contrato = df.groupby(group_cols, as_index=False).IMPORTE_PESOS.sum()
+
+    # Anexa máximos e identifica excesos
+    monto_por_contrato = pd.merge(monto_por_contrato, df_maximos, on='Año', how='inner')
+    es_mayor_al_max = (monto_por_contrato.IMPORTE_PESOS >
+                       monto_por_contrato['Adjudicación directa'])
+    monto_por_contrato = monto_por_contrato.assign(es_mayor_al_max=es_mayor_al_max)
+
+    if monto_por_contrato.empty:
+        return df_claves.assign(pc_adj_directas_excedieron_monto=0)
+
+    # Cuenta excedidos y no excedidos agrupados por CLAVEUC
+    # Remueve la fila All, solo queremos la columna (total por UC)
+    excedidas = (pd.crosstab(monto_por_contrato.CLAVEUC,
+                             monto_por_contrato.es_mayor_al_max,
+                             margins=True)
+                 .drop('All', axis=0))
+
+    if False not in excedidas.columns:
+        excedidas.insert(loc=0, column=False, value=0)
+    if True not in excedidas.columns:
+        excedidas.insert(loc=1, column=True, value=0)
+
+    excedidas['pc_adj_directas_excedieron_monto'] = excedidas[True].divide(excedidas['All']) * 100
+
+    # Left join con la lista de UCs
+    df_feature = pd.merge(df_claves, excedidas, on='CLAVEUC', how='left')
+    df_feature = df_feature.loc[:, ['CLAVEUC', 'pc_adj_directas_excedieron_monto']]
     return df_feature
 
 
