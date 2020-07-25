@@ -52,10 +52,10 @@ def favoritismo(df_procs: DataFrame,
     procs = df_procs.copy()
 
     feature_keys = ['PROVEEDOR_CONTRATISTA', 'CLAVEUC']
-    tab_index = [procs.PROVEEDOR_CONTRATISTA, procs.CLAVEUC]
+    procs_index = [procs.PROVEEDOR_CONTRATISTA, procs.CLAVEUC]
 
     # Número de contratos
-    contratos = (pd.crosstab(index=tab_index,
+    contratos = (pd.crosstab(index=procs_index,
                              columns=procs.TIPO_PROCEDIMIENTO,
                              margins=True,
                              margins_name='num_ganados')
@@ -90,7 +90,7 @@ def favoritismo(df_procs: DataFrame,
     frecuencias['frec_ganados_ir'] = frecuencias.num_ganados_ir.divide(frecuencias.contratos_uc) * 100
 
     # Monto adjudicado
-    monto = (pd.crosstab(index=tab_index,
+    monto = (pd.crosstab(index=procs_index,
                          columns=procs.TIPO_PROCEDIMIENTO,
                          values=procs.IMPORTE_PESOS,
                          aggfunc='sum',
@@ -111,7 +111,26 @@ def favoritismo(df_procs: DataFrame,
     if 'monto_ganado_ad' not in monto.columns:
         monto['monto_ganado_ad'] = 0.0
 
+    # Propuestas presentadas
+    parts_index = [df_parts.PROVEEDOR_CONTRATISTA, df_parts.CLAVEUC]
+    propuestas = (pd.crosstab(index=parts_index,
+                              columns=df_parts.TIPO_PROCEDIMIENTO)
+                  .rename(columns={
+                      'LICITACION PUBLICA': 'num_propuestas_lp',
+                      'INVITACION A CUANDO MENOS TRES': 'num_propuestas_ir'
+                  })
+                  .drop(['ADJUDICACION DIRECTA'], axis=1))
+
+    if 'num_propuestas_lp' not in propuestas.columns:
+        propuestas['num_propuestas_lp'] = 0
+    if 'num_propuestas_ir' not in propuestas.columns:
+        propuestas['num_propuestas_ir'] = 0
+
+    # Juntamos todas las variables calculadas
     variables = frecuencias.merge(monto, on=feature_keys)
+    # Las variables que vienen de la tabla de participantes
+    # hay que hacerles LEFT JOIN, porque algunos procs no estarán ahí.
+    variables = variables.merge(propuestas, on=feature_keys, how='left')
 
     variables = variables.drop([
         'contratos_uc',

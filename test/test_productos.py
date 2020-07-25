@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from features.productos import (
     colusion,
@@ -65,25 +66,27 @@ class TestProductos:
     def test_favoritismo(self):
         variables = pd.DataFrame(data=[
             # Ganadores para UC 001: A, B, B, C, D
-            [1, 0, 0, 20.0,  0.0, 0.0, 1000.0,    0.0, 0.0],
-            [2, 0, 0, 40.0,  0.0, 0.0, 4000.0,    0.0, 0.0],
-            [2, 0, 0, 40.0,  0.0, 0.0, 4000.0,    0.0, 0.0],
-            [0, 1, 0,  0.0, 20.0, 0.0,    0.0, 9000.0, 0.0],
-            [0, 1, 0,  0.0, 20.0, 0.0,    0.0, 5000.0, 0.0],
+            [1, 0, 0, 20.0,  0.0, 0.0, 1000.0,    0.0, 0.0, 0.0, 0.0],
+            [2, 0, 0, 40.0,  0.0, 0.0, 4000.0,    0.0, 0.0, 1.0, 0.0],
+            [2, 0, 0, 40.0,  0.0, 0.0, 4000.0,    0.0, 0.0, 1.0, 0.0],
+            [0, 1, 0,  0.0, 20.0, 0.0,    0.0, 9000.0, 0.0, 2.0, 0.0],
+            [0, 1, 0,  0.0, 20.0, 0.0,    0.0, 5000.0, 0.0, 1.0, 0.0],
             # Ganadores para UC 002: B, F, G, C, C
-            [1, 0, 0, 20.0,  0.0, 0.0, 3000.0,      0.0, 0.0],
-            [1, 0, 0, 20.0,  0.0, 0.0, 3000.0,      0.0, 0.0],
-            [1, 0, 0, 20.0,  0.0, 0.0, 4000.0,      0.0, 0.0],
-            [0, 2, 0,  0.0, 40.0, 0.0,    0.0, 800000.0, 0.0],
-            [0, 2, 0,  0.0, 40.0, 0.0,    0.0, 800000.0, 0.0]
+            [1, 0, 0, 20.0,  0.0, 0.0, 3000.0,      0.0, 0.0, 2.0, 0.0],
+            [1, 0, 0, 20.0,  0.0, 0.0, 3000.0,      0.0, 0.0, np.nan, np.nan],
+            [1, 0, 0, 20.0,  0.0, 0.0, 4000.0,      0.0, 0.0, np.nan, np.nan],
+            [0, 2, 0,  0.0, 40.0, 0.0,    0.0, 800000.0, 0.0, 2.0, 0.0],
+            [0, 2, 0,  0.0, 40.0, 0.0,    0.0, 800000.0, 0.0, 2.0, 0.0]
         ], columns=[
             'num_ganados_ad', 'num_ganados_lp', 'num_ganados_ir',
             'frec_ganados_ad', 'frec_ganados_lp', 'frec_ganados_ir',
-            'monto_ganado_ad', 'monto_ganado_lp', 'monto_ganado_ir'
+            'monto_ganado_ad', 'monto_ganado_lp', 'monto_ganado_ir',
+            'num_propuestas_lp', 'num_propuestas_ir'
         ])
 
         df_expected = pd.concat([df_test_procs, variables], axis=1)
         res = favoritismo(df_test_procs, df_test_parts)
+        print(res.columns)
         pd.testing.assert_frame_equal(res, df_expected)
         return None
 
