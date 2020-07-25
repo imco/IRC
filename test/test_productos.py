@@ -68,27 +68,28 @@ class TestProductos:
         trd = 1 / 3 * 100
         fir = 1420 * .40 + sth * .20 + 100 * .40
         flp = 800000 * .40 + trd * .20 + 100 * .40
+        fav007 = fir * .35
         variables = pd.DataFrame(data=[
             # Ganadores para UC 001: A, B, B, C, D
-            [1, 0, 0, 20.0,   0.0,   0.0, 1000.0,    0.0,     0.0,     0.0,    0.0, np.nan, np.nan,  666.6, np.nan, np.nan],
-            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan, 2653.2, np.nan, np.nan],
-            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan, 2653.2, np.nan, np.nan],
-            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  9000.0,     0.0,    2.0, np.nan,   50.0,    0.0, np.nan, 3624.0],
-            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  5000.0,     0.0,    1.0, np.nan,  100.0,    0.0, np.nan, 2044.0],
+            [1, 0, 0, 20.0,   0.0,   0.0, 1000.0,    0.0,     0.0,     0.0,    0.0, np.nan, np.nan,  666.6,    0.0,    0.0,    333.3],
+            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan, 2653.2,    0.0,    0.0,   1326.6],
+            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan, 2653.2,    0.0,    0.0,   1326.6],
+            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  9000.0,     0.0,    2.0, np.nan,   50.0,    0.0,    0.0, 3624.0,    543.6],
+            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  5000.0,     0.0,    1.0, np.nan,  100.0,    0.0,    0.0, 2044.0,    306.6],
             # Ganadores para UC 002: B, F, G, C, C, D
-            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0,    0.0,    2.0, np.nan, np.nan, 1985.5, np.nan, np.nan],
-            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan, 1985.5, np.nan, np.nan],
-            [1, 0, 0,  sth,   0.0,   0.0, 4000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan, 2645.5, np.nan, np.nan],
-            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0,    0.0, np.nan,    flp],
-            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0,    0.0, np.nan,    flp],
-            [0, 1, 0,  0.0,   sth,  00.0,    0.0, 1420.0,      0.0,    1.0,    1.0,  100.0,    0.0,    0.0,    fir,    0.0]
+            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0,    0.0,    2.0, np.nan, np.nan, 1985.5,    0.0,    0.0,   992.75],
+            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan, 1985.5,    0.0,    0.0,   992.75],
+            [1, 0, 0,  sth,   0.0,   0.0, 4000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan, 2645.5,    0.0,    0.0,  1322.75],
+            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0,    0.0,    0.0,    flp, 48007.00],
+            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0,    0.0,    0.0,    flp, 48007.00],
+            [0, 1, 0,  0.0,   sth,  00.0,    0.0, 1420.0,      0.0,    1.0,    1.0,  100.0,    0.0,    0.0,    fir,    0.0,   fav007]
         ], columns=[
             'num_ganados_ad', 'num_ganados_ir', 'num_ganados_lp',
             'frec_ganados_ad', 'frec_ganados_ir', 'frec_ganados_lp',
             'monto_ganado_ad', 'monto_ganado_ir', 'monto_ganado_lp',
             'num_propuestas_ir', 'num_propuestas_lp',
             'pc_exito_ir', 'pc_exito_lp',
-            'favorita_ad', 'favorita_ir', 'favorita_lp'
+            'favorita_ad', 'favorita_ir', 'favorita_lp', 'favoritismo'
         ])
 
         procs = df_test_procs.append(pd.DataFrame(data=[
@@ -102,7 +103,6 @@ class TestProductos:
         df_expected = pd.concat([procs, variables], axis=1)
         res = favoritismo(procs, parts)
         pd.testing.assert_frame_equal(res, df_expected)
-        return None
 
     def test_contratos_fraccionados(self):
         df_test_procs = pd.DataFrame(data=[

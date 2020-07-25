@@ -27,6 +27,9 @@ def favoritismo(df_procs: DataFrame,
     """
     Indicadores para calcular Favoritismo.
 
+    Favoritismo mide si las empresas han sido favorecidas por un alto número
+    de contratos, monto adjudicado y éxito en sus participaciones.
+
     Para cada procedimiento se calculan anualmente
     por empresa ganadora y UC.
 
@@ -172,6 +175,16 @@ def favoritismo(df_procs: DataFrame,
     variables['favorita_lp'] = (variables['monto_ganado_lp'] * .40 +
                                 variables['frec_ganados_lp'] * .20 +
                                 variables['pc_exito_lp'] * .40)
+
+    # Favoritismo
+    # Empresa favorita LP * .15 +
+    # Empresa favorita IR * .35 +
+    # Empresa favorita AD * .50
+    f = ['favorita_ad', 'favorita_ir', 'favorita_lp']
+    variables.loc[:, f] = variables.loc[:, f].fillna(0)
+    variables['favoritismo'] = (variables['favorita_lp'] * .15 +
+                                variables['favorita_ir'] * .35 +
+                                variables['favorita_ad'] * .50)
 
     variables = variables.drop([
         'contratos_uc',
