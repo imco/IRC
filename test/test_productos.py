@@ -8,7 +8,8 @@ from features.productos import (
     falta_transparencia_pnt,
     favoritismo,
     ganador_mas_barato,
-    plazos_cortos
+    plazos_cortos,
+    tajada_por_empresa
 )
 
 # Columnas comunes para cruces entre bases
@@ -102,6 +103,24 @@ class TestProductos:
 
         df_expected = pd.concat([procs, variables], axis=1)
         res = favoritismo(procs, parts)
+        pd.testing.assert_frame_equal(res, df_expected)
+
+    def test_tajada_por_empresa(self):
+        variables = pd.DataFrame(data=[
+            [  1000,    1000/19000],
+            [  4000,    4000/19000],
+            [  4000,    4000/19000],
+            [  9000,    9000/19000],
+            [  5000,    5000/19000],
+            [  3000,   3000/810000],
+            [  3000,   3000/810000],
+            [  4000,   4000/810000],
+            [800000, 800000/810000],
+            [800000, 800000/810000]
+        ], columns=['monto_por_empresa', 'share_por_empresa'])
+
+        df_expected = pd.concat([df_test_procs, variables], axis=1)
+        res = tajada_por_empresa(df_test_procs)
         pd.testing.assert_frame_equal(res, df_expected)
 
     def test_contratos_fraccionados(self):

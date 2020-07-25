@@ -197,6 +197,34 @@ def favoritismo(df_procs: DataFrame,
     return procs.merge(variables, on=feature_keys, how='left')
 
 
+def tajada_por_empresa(df_procs: DataFrame) -> DataFrame:
+    """
+    En cada UC y año calcula cuánto se lleva cada empresa
+    1. Monto adjudicado por empresa
+    2. Share por empresa
+    """
+    procs = df_procs.copy()
+
+    # 1. Monto total adjudicado a cada empresa en cada UC y cada año.
+    res = (procs.groupby(['CLAVEUC', 'PROVEEDOR_CONTRATISTA'])
+           .IMPORTE_PESOS.sum()
+           .reset_index()
+           .rename(columns={'IMPORTE_PESOS': 'monto_por_empresa'}))
+
+    # 2. Monto adjudicado por empresa / Monto total por UC por año
+    tot = (procs.groupby(['CLAVEUC'])
+           .IMPORTE_PESOS.sum()
+           .reset_index()
+           .rename(columns={'IMPORTE_PESOS': 'monto_total'}))
+
+    res = res.merge(tot)
+
+    res['share_por_empresa'] = res.monto_por_empresa.divide(res.monto_total)
+    res.drop('monto_total', axis=1, inplace=True)
+
+    return pd.merge(procs, res, how='left')
+
+
 def contratos_fraccionados(df_procs: DataFrame,
                            df_maximos: DataFrame, **kwargs) -> DataFrame:
     """
