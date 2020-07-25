@@ -64,29 +64,40 @@ df_test_parts.FECHA_INICIO = pd.to_datetime(df_test_parts.FECHA_INICIO)
 
 class TestProductos:
     def test_favoritismo(self):
+        sth = 1 / 6 * 100
+        trd = 1 / 3 * 100
         variables = pd.DataFrame(data=[
             # Ganadores para UC 001: A, B, B, C, D
-            [1, 0, 0, 20.0,  0.0, 0.0, 1000.0,    0.0, 0.0, 0.0, 0.0],
-            [2, 0, 0, 40.0,  0.0, 0.0, 4000.0,    0.0, 0.0, 1.0, 0.0],
-            [2, 0, 0, 40.0,  0.0, 0.0, 4000.0,    0.0, 0.0, 1.0, 0.0],
-            [0, 1, 0,  0.0, 20.0, 0.0,    0.0, 9000.0, 0.0, 2.0, 0.0],
-            [0, 1, 0,  0.0, 20.0, 0.0,    0.0, 5000.0, 0.0, 1.0, 0.0],
-            # Ganadores para UC 002: B, F, G, C, C
-            [1, 0, 0, 20.0,  0.0, 0.0, 3000.0,      0.0, 0.0, 2.0, 0.0],
-            [1, 0, 0, 20.0,  0.0, 0.0, 3000.0,      0.0, 0.0, np.nan, np.nan],
-            [1, 0, 0, 20.0,  0.0, 0.0, 4000.0,      0.0, 0.0, np.nan, np.nan],
-            [0, 2, 0,  0.0, 40.0, 0.0,    0.0, 800000.0, 0.0, 2.0, 0.0],
-            [0, 2, 0,  0.0, 40.0, 0.0,    0.0, 800000.0, 0.0, 2.0, 0.0]
+            [1, 0, 0, 20.0,   0.0,   0.0, 1000.0,    0.0,     0.0,     0.0,    0.0, np.nan, np.nan],
+            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan],
+            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan],
+            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  9000.0,     0.0,    2.0, np.nan,   50.0],
+            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  5000.0,     0.0,    1.0, np.nan,  100.0],
+            # Ganadores para UC 002: B, F, G, C, C, D
+            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0,    0.0,    2.0, np.nan, np.nan],
+            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan],
+            [1, 0, 0,  sth,   0.0,   0.0, 4000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan],
+            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0],
+            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0],
+            [0, 1, 0,  0.0,   sth,  00.0,    0.0, 1420.0,      0.0,    1.0,    1.0,  100.0,    0.0]
         ], columns=[
-            'num_ganados_ad', 'num_ganados_lp', 'num_ganados_ir',
-            'frec_ganados_ad', 'frec_ganados_lp', 'frec_ganados_ir',
-            'monto_ganado_ad', 'monto_ganado_lp', 'monto_ganado_ir',
-            'num_propuestas_lp', 'num_propuestas_ir'
+            'num_ganados_ad', 'num_ganados_ir', 'num_ganados_lp',
+            'frec_ganados_ad', 'frec_ganados_ir', 'frec_ganados_lp',
+            'monto_ganado_ad', 'monto_ganado_ir', 'monto_ganado_lp',
+            'num_propuestas_ir', 'num_propuestas_lp',
+            'pc_exito_ir', 'pc_exito_lp'
         ])
 
-        df_expected = pd.concat([df_test_procs, variables], axis=1)
-        res = favoritismo(df_test_procs, df_test_parts)
-        print(res.columns)
+        procs = df_test_procs.append(pd.DataFrame(data=[
+            ['002-IR-0008/2018', 'INVITACION A CUANDO MENOS TRES', 'SERVICIOS', 'Empresa D', '2018/05/15', '002', 1420]
+        ], columns=common + ['FECHA_INICIO', 'CLAVEUC', 'IMPORTE_PESOS']), ignore_index=True)
+
+        parts = df_test_parts.append(pd.DataFrame(data=[
+            ['002-IR-0008/2018', 'INVITACION A CUANDO MENOS TRES', 'SERVICIOS', 'Empresa D', '2018/05/15', '002', 1420, 'GANADOR', 320008]
+        ], columns=common + ['FECHA_INICIO', 'CLAVEUC', 'PRECIO_TOTAL', 'ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES']), ignore_index=True)
+
+        df_expected = pd.concat([procs, variables], axis=1)
+        res = favoritismo(procs, parts)
         pd.testing.assert_frame_equal(res, df_expected)
         return None
 

@@ -66,12 +66,12 @@ def favoritismo(df_procs: DataFrame,
                  })
                  .drop('num_ganados', axis=0))
 
-    if 'num_ganados_lp' not in contratos.columns:
-        contratos['num_ganados_lp'] = 0
-    if 'num_ganados_ir' not in contratos.columns:
-        contratos['num_ganados_ir'] = 0
     if 'num_ganados_ad' not in contratos.columns:
         contratos['num_ganados_ad'] = 0
+    if 'num_ganados_ir' not in contratos.columns:
+        contratos['num_ganados_ir'] = 0
+    if 'num_ganados_lp' not in contratos.columns:
+        contratos['num_ganados_lp'] = 0
 
     # Frecuencia de contratos (9 - B)
     # Fórmula (para LP) =
@@ -86,8 +86,8 @@ def favoritismo(df_procs: DataFrame,
     frecuencias = contratos.merge(contratos_uc, on='CLAVEUC')
 
     frecuencias['frec_ganados_ad'] = frecuencias.num_ganados_ad.divide(frecuencias.contratos_uc) * 100
-    frecuencias['frec_ganados_lp'] = frecuencias.num_ganados_lp.divide(frecuencias.contratos_uc) * 100
     frecuencias['frec_ganados_ir'] = frecuencias.num_ganados_ir.divide(frecuencias.contratos_uc) * 100
+    frecuencias['frec_ganados_lp'] = frecuencias.num_ganados_lp.divide(frecuencias.contratos_uc) * 100
 
     # Monto adjudicado (6 - 8)
     monto = (pd.crosstab(index=procs_index,
@@ -104,12 +104,12 @@ def favoritismo(df_procs: DataFrame,
              .fillna(0)
              .drop('monto_ganado', axis=0))
 
-    if 'monto_ganado_lp' not in monto.columns:
-        monto['monto_ganado_lp'] = 0.0
-    if 'monto_ganado_ir' not in monto.columns:
-        monto['monto_ganado_ir'] = 0.0
     if 'monto_ganado_ad' not in monto.columns:
         monto['monto_ganado_ad'] = 0.0
+    if 'monto_ganado_ir' not in monto.columns:
+        monto['monto_ganado_ir'] = 0.0
+    if 'monto_ganado_lp' not in monto.columns:
+        monto['monto_ganado_lp'] = 0.0
 
     # Propuestas presentadas (4 - 5)
     parts_index = [df_parts.PROVEEDOR_CONTRATISTA, df_parts.CLAVEUC]
@@ -121,10 +121,33 @@ def favoritismo(df_procs: DataFrame,
                   })
                   .drop(['ADJUDICACION DIRECTA'], axis=1))
 
-    if 'num_propuestas_lp' not in propuestas.columns:
-        propuestas['num_propuestas_lp'] = 0
     if 'num_propuestas_ir' not in propuestas.columns:
         propuestas['num_propuestas_ir'] = 0
+    if 'num_propuestas_lp' not in propuestas.columns:
+        propuestas['num_propuestas_lp'] = 0
+
+    # Éxito de la empresa (C - D)
+    # Fórmula =
+    #   Número de contratos ganados por empresa LP /
+    #   Número de propuestas presentadas por empresa LP * 100
+    # Dado que la tabla de participantes (parts) es un subconjunto de procs
+    # Tendremos que hacer este cálculo solamente con parts
+    # No podremos reciclar el dataframe contratos,
+    # lo tenemos que hacer sobre las propuestas.
+    m = ((df_parts.TIPO_PROCEDIMIENTO != 'ADJUDICACION DIRECTA') &
+         (df_parts.ESTATUS_DE_PROPUESTA == 'GANADOR'))
+    concursos_ganados = df_parts[m]
+    parts_index = [concursos_ganados.PROVEEDOR_CONTRATISTA, concursos_ganados.CLAVEUC]
+    concursos_ganados = (pd.crosstab(index=parts_index,
+                                     columns=concursos_ganados.TIPO_PROCEDIMIENTO)
+                         .rename(columns={
+                             'LICITACION PUBLICA': 'exito_lp',
+                             'INVITACION A CUANDO MENOS TRES': 'exito_ir'
+                         }))
+
+    propuestas = propuestas.merge(concursos_ganados, on=feature_keys, how='left')
+    propuestas['pc_exito_ir'] = propuestas.exito_ir.divide(propuestas.num_propuestas_ir) * 100
+    propuestas['pc_exito_lp'] = propuestas.exito_lp.divide(propuestas.num_propuestas_lp) * 100
 
     # Juntamos todas las variables calculadas
     variables = frecuencias.merge(monto, on=feature_keys)
@@ -134,6 +157,8 @@ def favoritismo(df_procs: DataFrame,
 
     variables = variables.drop([
         'contratos_uc',
+        'exito_ir',
+        'exito_lp',
         'monto_ganado',
         'num_ganados'
     ], axis=1)
