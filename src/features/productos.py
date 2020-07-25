@@ -111,6 +111,9 @@ def favoritismo(df_procs: DataFrame,
     if 'monto_ganado_lp' not in monto.columns:
         monto['monto_ganado_lp'] = 0.0
 
+    # Empezamos a juntar variables (1 - 3, 6 - 8, 9 - B)
+    variables = frecuencias.merge(monto, on=feature_keys)
+
     # Propuestas presentadas (4 - 5)
     parts_index = [df_parts.PROVEEDOR_CONTRATISTA, df_parts.CLAVEUC]
     propuestas = (pd.crosstab(index=parts_index,
@@ -149,11 +152,26 @@ def favoritismo(df_procs: DataFrame,
     propuestas['pc_exito_ir'] = propuestas.exito_ir.divide(propuestas.num_propuestas_ir) * 100
     propuestas['pc_exito_lp'] = propuestas.exito_lp.divide(propuestas.num_propuestas_lp) * 100
 
-    # Juntamos todas las variables calculadas
-    variables = frecuencias.merge(monto, on=feature_keys)
+    # Agregamos variables (4 - 5 y C - D)
     # Las variables que vienen de la tabla de participantes
     # hay que hacerles LEFT JOIN, porque algunos procs no estarán ahí.
     variables = variables.merge(propuestas, on=feature_keys, how='left')
+
+    # Empresa favorita (E - G) =
+    # Monto adjudicado por empresa LP * .40 +
+    # Frecuencia de contratos ganados por LP * .20 +
+    # Porcentaje de éxito empresa por LP * .40
+    # Para AD la fórmula cambia =
+    # Monto adjudicado por empresa AD * .66 +
+    # Frecuencia de contratos ganados por AD * .33
+    variables['favorita_ad'] = (variables['monto_ganado_ad'] * .66 +
+                                variables['frec_ganados_ad'] * .33)
+    variables['favorita_ir'] = (variables['monto_ganado_ir'] * .40 +
+                                variables['frec_ganados_ir'] * .20 +
+                                variables['pc_exito_ir'] * .40)
+    variables['favorita_lp'] = (variables['monto_ganado_lp'] * .40 +
+                                variables['frec_ganados_lp'] * .20 +
+                                variables['pc_exito_lp'] * .40)
 
     variables = variables.drop([
         'contratos_uc',

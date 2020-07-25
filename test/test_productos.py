@@ -66,26 +66,29 @@ class TestProductos:
     def test_favoritismo(self):
         sth = 1 / 6 * 100
         trd = 1 / 3 * 100
+        fir = 1420 * .40 + sth * .20 + 100 * .40
+        flp = 800000 * .40 + trd * .20 + 100 * .40
         variables = pd.DataFrame(data=[
             # Ganadores para UC 001: A, B, B, C, D
-            [1, 0, 0, 20.0,   0.0,   0.0, 1000.0,    0.0,     0.0,     0.0,    0.0, np.nan, np.nan],
-            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan],
-            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan],
-            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  9000.0,     0.0,    2.0, np.nan,   50.0],
-            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  5000.0,     0.0,    1.0, np.nan,  100.0],
+            [1, 0, 0, 20.0,   0.0,   0.0, 1000.0,    0.0,     0.0,     0.0,    0.0, np.nan, np.nan,  666.6, np.nan, np.nan],
+            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan, 2653.2, np.nan, np.nan],
+            [2, 0, 0, 40.0,   0.0,   0.0, 4000.0,    0.0,     0.0,     0.0,    1.0, np.nan, np.nan, 2653.2, np.nan, np.nan],
+            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  9000.0,     0.0,    2.0, np.nan,   50.0,    0.0, np.nan, 3624.0],
+            [0, 0, 1,  0.0,   0.0,  20.0,    0.0,    0.0,  5000.0,     0.0,    1.0, np.nan,  100.0,    0.0, np.nan, 2044.0],
             # Ganadores para UC 002: B, F, G, C, C, D
-            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0,    0.0,    2.0, np.nan, np.nan],
-            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan],
-            [1, 0, 0,  sth,   0.0,   0.0, 4000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan],
-            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0],
-            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0],
-            [0, 1, 0,  0.0,   sth,  00.0,    0.0, 1420.0,      0.0,    1.0,    1.0,  100.0,    0.0]
+            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0,    0.0,    2.0, np.nan, np.nan, 1985.5, np.nan, np.nan],
+            [1, 0, 0,  sth,   0.0,   0.0, 3000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan, 1985.5, np.nan, np.nan],
+            [1, 0, 0,  sth,   0.0,   0.0, 4000.0,    0.0,      0.0, np.nan, np.nan, np.nan, np.nan, 2645.5, np.nan, np.nan],
+            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0,    0.0, np.nan,    flp],
+            [0, 0, 2,  0.0,   0.0,   trd,    0.0,    0.0, 800000.0,    0.0,    2.0, np.nan,  100.0,    0.0, np.nan,    flp],
+            [0, 1, 0,  0.0,   sth,  00.0,    0.0, 1420.0,      0.0,    1.0,    1.0,  100.0,    0.0,    0.0,    fir,    0.0]
         ], columns=[
             'num_ganados_ad', 'num_ganados_ir', 'num_ganados_lp',
             'frec_ganados_ad', 'frec_ganados_ir', 'frec_ganados_lp',
             'monto_ganado_ad', 'monto_ganado_ir', 'monto_ganado_lp',
             'num_propuestas_ir', 'num_propuestas_lp',
-            'pc_exito_ir', 'pc_exito_lp'
+            'pc_exito_ir', 'pc_exito_lp',
+            'favorita_ad', 'favorita_ir', 'favorita_lp'
         ])
 
         procs = df_test_procs.append(pd.DataFrame(data=[
