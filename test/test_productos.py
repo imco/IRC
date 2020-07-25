@@ -102,8 +102,16 @@ class TestProductos:
         ], columns=common + ['FECHA_INICIO', 'CLAVEUC', 'PRECIO_TOTAL', 'ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES']), ignore_index=True)
 
         df_expected = pd.concat([procs, variables], axis=1)
+
+        procs_before = procs.copy()
+        parts_before = parts.copy()
+
         res = favoritismo(procs, parts)
         pd.testing.assert_frame_equal(res, df_expected)
+
+        # Inmutabilidad
+        pd.testing.assert_frame_equal(procs_before, procs)
+        pd.testing.assert_frame_equal(parts_before, parts)
 
     def test_tajada_por_empresa(self):
         variables = pd.DataFrame(data=[
