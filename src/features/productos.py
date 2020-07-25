@@ -52,7 +52,17 @@ def favoritismo(df_procs: DataFrame,
         G. Empresa favorita AD
         H. Favoritismo
     """
+    # Para descartar tipos de procedimientos marcados como OTRO
+    tipo_procs = [
+        'ADJUDICACION DIRECTA',
+        'INVITACION A CUANDO MENOS TRES',
+        'LICITACION PUBLICA'
+    ]
+
     procs = df_procs.copy()
+    procs = procs[procs.TIPO_PROCEDIMIENTO.isin(tipo_procs)]
+    # De este no haremos copia, trabajaremos con la referencia
+    parts = df_parts[df_parts.TIPO_PROCEDIMIENTO.isin(tipo_procs)]
 
     feature_keys = ['PROVEEDOR_CONTRATISTA', 'CLAVEUC']
     procs_index = [procs.PROVEEDOR_CONTRATISTA, procs.CLAVEUC]
@@ -118,9 +128,9 @@ def favoritismo(df_procs: DataFrame,
     variables = frecuencias.merge(monto, on=feature_keys)
 
     # Propuestas presentadas (4 - 5)
-    parts_index = [df_parts.PROVEEDOR_CONTRATISTA, df_parts.CLAVEUC]
+    parts_index = [parts.PROVEEDOR_CONTRATISTA, parts.CLAVEUC]
     propuestas = (pd.crosstab(index=parts_index,
-                              columns=df_parts.TIPO_PROCEDIMIENTO)
+                              columns=parts.TIPO_PROCEDIMIENTO)
                   .rename(columns={
                       'LICITACION PUBLICA': 'num_propuestas_lp',
                       'INVITACION A CUANDO MENOS TRES': 'num_propuestas_ir'
@@ -140,9 +150,10 @@ def favoritismo(df_procs: DataFrame,
     # Tendremos que hacer este cálculo solamente con parts
     # No podremos reciclar el dataframe contratos,
     # lo tenemos que hacer sobre las propuestas.
-    m = ((df_parts.TIPO_PROCEDIMIENTO != 'ADJUDICACION DIRECTA') &
-         (df_parts.ESTATUS_DE_PROPUESTA == 'GANADOR'))
-    concursos_ganados = df_parts[m]
+    tipo_procs = ['INVITACION A CUANDO MENOS TRES', 'LICITACION PUBLICA']
+    m = ((parts.TIPO_PROCEDIMIENTO.isin(tipo_procs)) &
+         (parts.ESTATUS_DE_PROPUESTA == 'GANADOR'))
+    concursos_ganados = parts[m]
     parts_index = [concursos_ganados.PROVEEDOR_CONTRATISTA, concursos_ganados.CLAVEUC]
     concursos_ganados = (pd.crosstab(index=parts_index,
                                      columns=concursos_ganados.TIPO_PROCEDIMIENTO)
@@ -194,7 +205,8 @@ def favoritismo(df_procs: DataFrame,
         'num_ganados'
     ], axis=1)
 
-    return procs.merge(variables, on=feature_keys, how='left')
+    # El último merge sí se hace con el dataframe original
+    return df_procs.merge(variables, on=feature_keys, how='left')
 
 
 def tajada_por_empresa(df_procs: DataFrame) -> DataFrame:
