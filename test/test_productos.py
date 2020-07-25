@@ -34,29 +34,29 @@ df_test_procs['FECHA_INICIO'] = pd.to_datetime(df_test_procs['FECHA_INICIO'])
 # Mock de tabla de participantes
 df_test_parts = pd.DataFrame(data=[
     # Adjudicación con 3 participantes
-    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', 1200, 'GANADOR', 320000],
-    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/02/01', 1000, 'PERDEDOR', 320000],
-    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa D', '2018/02/01', 1000, 'PERDEDOR', 320000],
+    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', '001', 1200, 'GANADOR', 320000],
+    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/02/01', '001', 1000, 'PERDEDOR', 320000],
+    ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa D', '2018/02/01', '001', 1000, 'PERDEDOR', 320000],
     # Adjudicación con un solo participante
-    ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/03/01', 2000, 'GANADOR', 320001],
+    ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/03/01', '001', 2000, 'GANADOR', 320001],
     # Adjudicación con 2 participantes
-    ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/04/01', 2000, 'GANADOR', 320002],
-    ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/04/01', 2000, 'GANADOR', 320002],
+    ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/04/01', '001', 2000, 'GANADOR', 320002],
+    ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa C', '2018/04/01', '001', 2000, 'GANADOR', 320002],
     # Licitación pública con un solo participante
-    ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', 9000, 'GANADOR', 320003],
+    ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', '001', 9000, 'GANADOR', 320003],
     # Licitación pública con tres participantes
-    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/06/01', 5000, 'GANADOR', 320004],
-    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/06/01', 5000, 'PERDEDOR', 320004],
-    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/06/01', 5000, 'PERDEDOR', 320004],
+    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/06/01', '001', 5000, 'GANADOR', 320004],
+    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/06/01', '001', 5000, 'PERDEDOR', 320004],
+    ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/06/01', '001', 5000, 'PERDEDOR', 320004],
     # Adjudicación directa con un solo participante
-    ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', 3000, 'GANADOR', 320005],
+    ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', '002', 3000, 'GANADOR', 320005],
     # Otras Licitaciones Públicas
-    ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', 9500, 'GANADOR', 320006],
-    ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/01', 9000, 'PERDEDOR', 320006],
-    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/09', 8000, 'GANADOR', 320007],
-    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/09', 8010, 'PERDEDOR', 320007],
-    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/05/09', 8020, 'PERDEDOR', 320007]
-], columns=common + ['FECHA_INICIO', 'PRECIO_TOTAL', 'ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES'])
+    ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/01', '002', 9500, 'GANADOR', 320006],
+    ['001-LP-0006/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/01', '002', 9000, 'PERDEDOR', 320006],
+    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '2018/05/09', '002', 8000, 'GANADOR', 320007],
+    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa B', '2018/05/09', '002', 8010, 'PERDEDOR', 320007],
+    ['001-LP-0007/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '2018/05/09', '002', 8020, 'PERDEDOR', 320007]
+], columns=common + ['FECHA_INICIO', 'CLAVEUC', 'PRECIO_TOTAL', 'ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES'])
 
 df_test_parts.FECHA_INICIO = pd.to_datetime(df_test_parts.FECHA_INICIO)
 
@@ -270,18 +270,18 @@ class TestProductos:
         ], columns=common)
 
         df_variables = pd.DataFrame(data=[
-            ['2018/02/01', 1200, 1000, 0],
-            ['2018/03/01', 2000, 2000, 1],
-            ['2018/04/01', 2000, 2000, 1],
-            ['2018/05/01', 9000, 9000, 1],
-            ['2018/06/01', 5000, 5000, 1],
-            ['2018/07/01', 3000, 3000, 1],
+            ['2018/02/01', '001', 1200, 1000, 0],
+            ['2018/03/01', '001', 2000, 2000, 1],
+            ['2018/04/01', '001', 2000, 2000, 1],
+            ['2018/05/01', '001', 9000, 9000, 1],
+            ['2018/06/01', '001', 5000, 5000, 1],
+            ['2018/07/01', '002', 3000, 3000, 1],
             [],
             [],
-            ['2018/05/01', 9500, 9000, 0],
-            ['2018/05/09', 8000, 8000, 1]
+            ['2018/05/01', '002', 9500, 9000, 0],
+            ['2018/05/09', '002', 8000, 8000, 1]
         ], columns=[
-            'FECHA_INICIO', 'PRECIO_TOTAL', 'PRECIO_MAS_BAJO', 'mas_barato'
+            'FECHA_INICIO', 'CLAVEUC', 'PRECIO_TOTAL', 'PRECIO_MAS_BAJO', 'mas_barato'
         ])
 
         df_variables['FECHA_INICIO'] = pd.to_datetime(df_variables['FECHA_INICIO'])
