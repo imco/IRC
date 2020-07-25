@@ -5,6 +5,7 @@ from features.productos import (
     contratos_fraccionados,
     convenios_entre_entes_publicos,
     falta_transparencia_pnt,
+    favoritismo,
     ganador_mas_barato,
     plazos_cortos
 )
@@ -61,6 +62,31 @@ df_test_parts.FECHA_INICIO = pd.to_datetime(df_test_parts.FECHA_INICIO)
 
 
 class TestProductos:
+    def test_favoritismo(self):
+        variables = pd.DataFrame(data=[
+            # Ganadores para UC 001: A, B, B, C, D
+            [1, 0, 0, 20.0,  0.0, 0.0, 1000.0,    0.0, 0.0],
+            [2, 0, 0, 40.0,  0.0, 0.0, 4000.0,    0.0, 0.0],
+            [2, 0, 0, 40.0,  0.0, 0.0, 4000.0,    0.0, 0.0],
+            [0, 1, 0,  0.0, 20.0, 0.0,    0.0, 9000.0, 0.0],
+            [0, 1, 0,  0.0, 20.0, 0.0,    0.0, 5000.0, 0.0],
+            # Ganadores para UC 002: B, F, G, C, C
+            [1, 0, 0, 20.0,  0.0, 0.0, 3000.0,      0.0, 0.0],
+            [1, 0, 0, 20.0,  0.0, 0.0, 3000.0,      0.0, 0.0],
+            [1, 0, 0, 20.0,  0.0, 0.0, 4000.0,      0.0, 0.0],
+            [0, 2, 0,  0.0, 40.0, 0.0,    0.0, 800000.0, 0.0],
+            [0, 2, 0,  0.0, 40.0, 0.0,    0.0, 800000.0, 0.0]
+        ], columns=[
+            'num_ganados_ad', 'num_ganados_lp', 'num_ganados_ir',
+            'frec_ganados_ad', 'frec_ganados_lp', 'frec_ganados_ir',
+            'monto_ganado_ad', 'monto_ganado_lp', 'monto_ganado_ir'
+        ])
+
+        df_expected = pd.concat([df_test_procs, variables], axis=1)
+        res = favoritismo(df_test_procs, df_test_parts)
+        pd.testing.assert_frame_equal(res, df_expected)
+        return None
+
     def test_contratos_fraccionados(self):
         df_test_procs = pd.DataFrame(data=[
             ['001', 'ADJUDICACION DIRECTA', 'SERVICIOS', '2018-01-01', 'Empresa A', '001-AD-0001/2018', 1000.0],

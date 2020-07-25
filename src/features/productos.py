@@ -22,6 +22,106 @@ id_cols = [
 ]
 
 
+def favoritismo(df_procs: DataFrame,
+                df_parts: DataFrame, **kwargs) -> DataFrame:
+    """
+    Indicadores para calcular Favoritismo.
+
+    Para cada procedimiento se calculan anualmente
+    por empresa ganadora y UC.
+
+    Variables:
+        Número de contratos ganados por empresa LP
+        Número de contratos ganados por empresa IR
+        Número de contratos ganados por empresa AD
+        Número de propuestas presentadas por empresa LP.
+        Número de propuestas presentadas por empresa IR.
+        Monto adjudicado por empresa LP.
+        Monto adjudicado por empresa IR.
+        Monto adjudicado por empresa AD.
+        Frecuencia de contratos ganados por LP.
+        Frecuencia de contratos ganados por IR.
+        Frecuencia de contratos ganados por AD.
+        Porcentaje de éxito empresa por LP
+        Porcentaje de éxito empresa por IR
+        Empresa favorita LP
+        Empresa favorita IR
+        Empresa favorita AD
+        Favoritismo
+    """
+    procs = df_procs.copy()
+
+    feature_keys = ['PROVEEDOR_CONTRATISTA', 'CLAVEUC']
+    tab_index = [procs.PROVEEDOR_CONTRATISTA, procs.CLAVEUC]
+
+    # Número de contratos
+    contratos = (pd.crosstab(index=tab_index,
+                             columns=procs.TIPO_PROCEDIMIENTO,
+                             margins=True,
+                             margins_name='num_ganados')
+                 .rename(columns={
+                     'LICITACION PUBLICA': 'num_ganados_lp',
+                     'INVITACION A CUANDO MENOS TRES': 'num_ganados_ir',
+                     'ADJUDICACION DIRECTA': 'num_ganados_ad'
+                 })
+                 .drop('num_ganados', axis=0))
+
+    if 'num_ganados_lp' not in contratos.columns:
+        contratos['num_ganados_lp'] = 0
+    if 'num_ganados_ir' not in contratos.columns:
+        contratos['num_ganados_ir'] = 0
+    if 'num_ganados_ad' not in contratos.columns:
+        contratos['num_ganados_ad'] = 0
+
+    # Frecuencia de contratos
+    # Fórmula (para LP) =
+    # Número de contratos ganados por empresa LP /
+    # Máximo de contratos adjudicados por UC en el año * 100
+    contratos_uc = (contratos.groupby('CLAVEUC')
+                    .num_ganados.sum()
+                    .reset_index()
+                    .rename(columns={'num_ganados': 'contratos_uc'}))
+
+    contratos = contratos.reset_index()
+    frecuencias = contratos.merge(contratos_uc, on='CLAVEUC')
+
+    frecuencias['frec_ganados_ad'] = frecuencias.num_ganados_ad.divide(frecuencias.contratos_uc) * 100
+    frecuencias['frec_ganados_lp'] = frecuencias.num_ganados_lp.divide(frecuencias.contratos_uc) * 100
+    frecuencias['frec_ganados_ir'] = frecuencias.num_ganados_ir.divide(frecuencias.contratos_uc) * 100
+
+    # Monto adjudicado
+    monto = (pd.crosstab(index=tab_index,
+                         columns=procs.TIPO_PROCEDIMIENTO,
+                         values=procs.IMPORTE_PESOS,
+                         aggfunc='sum',
+                         margins=True,
+                         margins_name='monto_ganado')
+             .rename(columns={
+                 'LICITACION PUBLICA': 'monto_ganado_lp',
+                 'INVITACION A CUANDO MENOS TRES': 'monto_ganado_ir',
+                 'ADJUDICACION DIRECTA': 'monto_ganado_ad'
+             })
+             .fillna(0)
+             .drop('monto_ganado', axis=0))
+
+    if 'monto_ganado_lp' not in monto.columns:
+        monto['monto_ganado_lp'] = 0.0
+    if 'monto_ganado_ir' not in monto.columns:
+        monto['monto_ganado_ir'] = 0.0
+    if 'monto_ganado_ad' not in monto.columns:
+        monto['monto_ganado_ad'] = 0.0
+
+    variables = frecuencias.merge(monto, on=feature_keys)
+
+    variables = variables.drop([
+        'contratos_uc',
+        'monto_ganado',
+        'num_ganados'
+    ], axis=1)
+
+    return procs.merge(variables, on=feature_keys, how='left')
+
+
 def contratos_fraccionados(df_procs: DataFrame,
                            df_maximos: DataFrame, **kwargs) -> DataFrame:
     """
