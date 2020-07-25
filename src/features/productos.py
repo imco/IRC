@@ -31,30 +31,30 @@ def favoritismo(df_procs: DataFrame,
     por empresa ganadora y UC.
 
     Variables:
-        Número de contratos ganados por empresa LP
-        Número de contratos ganados por empresa IR
-        Número de contratos ganados por empresa AD
-        Número de propuestas presentadas por empresa LP.
-        Número de propuestas presentadas por empresa IR.
-        Monto adjudicado por empresa LP.
-        Monto adjudicado por empresa IR.
-        Monto adjudicado por empresa AD.
-        Frecuencia de contratos ganados por LP.
-        Frecuencia de contratos ganados por IR.
-        Frecuencia de contratos ganados por AD.
-        Porcentaje de éxito empresa por LP
-        Porcentaje de éxito empresa por IR
-        Empresa favorita LP
-        Empresa favorita IR
-        Empresa favorita AD
-        Favoritismo
+        1. Número de contratos ganados por empresa LP
+        2. Número de contratos ganados por empresa IR
+        3. Número de contratos ganados por empresa AD
+        4. Número de propuestas presentadas por empresa LP.
+        5. Número de propuestas presentadas por empresa IR.
+        6. Monto adjudicado por empresa LP.
+        7. Monto adjudicado por empresa IR.
+        8. Monto adjudicado por empresa AD.
+        9. Frecuencia de contratos ganados por LP.
+        A. Frecuencia de contratos ganados por IR.
+        B. Frecuencia de contratos ganados por AD.
+        C. Porcentaje de éxito empresa por LP
+        D. Porcentaje de éxito empresa por IR
+        E. Empresa favorita LP
+        F. Empresa favorita IR
+        G. Empresa favorita AD
+        H. Favoritismo
     """
     procs = df_procs.copy()
 
     feature_keys = ['PROVEEDOR_CONTRATISTA', 'CLAVEUC']
     procs_index = [procs.PROVEEDOR_CONTRATISTA, procs.CLAVEUC]
 
-    # Número de contratos
+    # Número de contratos (1 - 3)
     contratos = (pd.crosstab(index=procs_index,
                              columns=procs.TIPO_PROCEDIMIENTO,
                              margins=True,
@@ -73,7 +73,7 @@ def favoritismo(df_procs: DataFrame,
     if 'num_ganados_ad' not in contratos.columns:
         contratos['num_ganados_ad'] = 0
 
-    # Frecuencia de contratos
+    # Frecuencia de contratos (9 - B)
     # Fórmula (para LP) =
     # Número de contratos ganados por empresa LP /
     # Máximo de contratos adjudicados por UC en el año * 100
@@ -89,7 +89,7 @@ def favoritismo(df_procs: DataFrame,
     frecuencias['frec_ganados_lp'] = frecuencias.num_ganados_lp.divide(frecuencias.contratos_uc) * 100
     frecuencias['frec_ganados_ir'] = frecuencias.num_ganados_ir.divide(frecuencias.contratos_uc) * 100
 
-    # Monto adjudicado
+    # Monto adjudicado (6 - 8)
     monto = (pd.crosstab(index=procs_index,
                          columns=procs.TIPO_PROCEDIMIENTO,
                          values=procs.IMPORTE_PESOS,
@@ -111,7 +111,7 @@ def favoritismo(df_procs: DataFrame,
     if 'monto_ganado_ad' not in monto.columns:
         monto['monto_ganado_ad'] = 0.0
 
-    # Propuestas presentadas
+    # Propuestas presentadas (4 - 5)
     parts_index = [df_parts.PROVEEDOR_CONTRATISTA, df_parts.CLAVEUC]
     propuestas = (pd.crosstab(index=parts_index,
                               columns=df_parts.TIPO_PROCEDIMIENTO)
