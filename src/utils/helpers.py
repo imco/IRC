@@ -71,6 +71,17 @@ def da_participaciones_unicas(df_parts: DataFrame,
     return (pd.merge(ganadores, gr_parts)
             .drop('ESTATUS_DE_PROPUESTA', axis=1))
 
+
+def da_llaves_unicas_sipot():
+    return [
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'TIPO_CONTRATACION',
+        'FECHA_INICIO',
+        'PROVEEDOR_CONTRATISTA'
+    ]
+
+
 def une_sipot_con_procedimientos(df_procs: DataFrame,
                                  df_sipot: DataFrame) -> DataFrame:
     """
@@ -83,14 +94,7 @@ def une_sipot_con_procedimientos(df_procs: DataFrame,
     Sin embargo en SIPOT no tenemos CLAVEUC.
     """
     # Agregando el PROVEEDOR y el importe, mejoramos los matches en procedimientos.
-    keys = [
-        'NUMERO_PROCEDIMIENTO',
-        'TIPO_PROCEDIMIENTO',
-        'TIPO_CONTRATACION',
-        'FECHA_INICIO',
-        'PROVEEDOR_CONTRATISTA',
-        'IMPORTE_PESOS'
-    ]
+    keys = da_llaves_unicas_sipot() + ['IMPORTE_PESOS']
 
     # Siempre con LEFT JOIN porque la tabla de procedimientos es nuestro
     # punto de referencia siempre.

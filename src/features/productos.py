@@ -15,7 +15,8 @@ from utils.helpers import (
     agrupa_participaciones,
     une_participantes_con_procedimientos,
     da_participaciones_unicas,
-    une_sipot_con_procedimientos
+    une_sipot_con_procedimientos,
+    da_llaves_unicas_sipot
 )
 
 DataFrame = pd.DataFrame
@@ -348,6 +349,8 @@ def convenios_entre_entes_publicos(df_procs: DataFrame,
     ad_sipot['LOPSRM'] = (leyobr | lopsrm).astype(int)
 
     ad_sipot.drop('MOTIVOS_ADJUDICACION', axis=1, inplace=True)
+
+    ad_sipot = ad_sipot[['LAASSP', 'LOPSRM', 'PRECIO_TOTAL'] + da_llaves_unicas_sipot()]
 
     # Mezclamos con la tabla de procedimientos
     return une_sipot_con_procedimientos(df_procs, ad_sipot)
