@@ -13,23 +13,26 @@ class TestTransparencia:
                       ['LIGA_CONVOCATORIA', 'LIGA_FALLO', 'LIGA_FINIQUITO'])
 
         df_test_procs = pd.DataFrame(data=[
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '001', 1000],
-            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '001', 2000],
-            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '001', 2000],
-            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '001', 9000],
-            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '001', 5000],
-            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '002', 3000],
-            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa F', '002', 3000]
-        ], columns=common + ['CLAVEUC', 'IMPORTE_PESOS'])
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '001', 1000, '2018/01/01'],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '001', 2000, '2018/02/01'],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '001', 2000, '2018/03/01'],
+            ['001-LP-0004/2018', 'LICITACION PUBLICA',   'SERVICIOS', 'Empresa C', '001', 9000, '2018/04/01'],
+            ['001-LP-0005/2018', 'LICITACION PUBLICA',   'SERVICIOS', 'Empresa D', '001', 5000, '2018/05/01'],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '002', 3000, '2018/06/01'],
+            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa F', '002', 3000, '2018/07/01']
+        ], columns=common + ['CLAVEUC', 'IMPORTE_PESOS', 'FECHA_INICIO'])
 
         df_test_sipot = pd.DataFrame(data=[
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', 1, 1, 1, None, None, None, 1000, 201000100],
-            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 1, 1, 1, None, None, None, 2000, 201000101],
-            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', None, None, None, None, None, None, 3000, 201000102],
-            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', None, None, 1, 1, 1, 1, 9000, 201000103],
-            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', None, None, None, None, 1, 1, 9000, 201000104],
-            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', None, None, 1, None, None, None, 3000, 201000105],
-        ], columns=common + sipot_cols + ['PRECIO_TOTAL', 'SIPOT_ID'])
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/01/01', 1, 1, 1, None, None, None, 1000, 201000100],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/02/01', 1, 1, 1, None, None, None, 2000, 201000101],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/03/01', None, None, None, None, None, None, 3000, 201000102],
+            ['001-LP-0004/2018', 'LICITACION PUBLICA',   'SERVICIOS', 'Empresa C', '2018/04/01', None, None, 1, 1, 1, 1, 9000, 201000103],
+            ['001-LP-0005/2018', 'LICITACION PUBLICA',   'SERVICIOS', 'Empresa D', '2018/05/01', None, None, None, None, 1, 1, 9000, 201000104],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/06/01', None, None, 1, None, None, None, 3000, 201000105],
+        ], columns=common + ['FECHA_INICIO'] + sipot_cols + ['PRECIO_TOTAL', 'SIPOT_ID'])
+
+        df_test_procs.FECHA_INICIO = pd.to_datetime(df_test_procs.FECHA_INICIO)
+        df_test_sipot.FECHA_INICIO = pd.to_datetime(df_test_sipot.FECHA_INICIO)
 
         df_expected = pd.DataFrame(data=[
             # Una AD sin las 3 LIGAS requeridas y mal monto

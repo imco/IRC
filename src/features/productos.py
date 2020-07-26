@@ -371,7 +371,18 @@ def falta_transparencia_pnt(df_procs: DataFrame,
     ad_cols = ['LIGA_AUTORIZACION', 'REF_COTIZACIONES', 'LIGA_CONTRATO']
     lp_cols = ['LIGA_CONVOCATORIA', 'LIGA_FALLO', 'LIGA_CONTRATO', 'LIGA_FINIQUITO']
 
-    merged = df_procs.merge(df_sipot, on=id_cols, how='left', indicator=True)
+    # Para este caso en particular no podemos usar
+    # une_sipot_con_procedimientos porque el IMPORTE_PESOS lo vamos a comparar
+    # contra PRECIO_TOTAL. Trataremos de replicar lo más posible.
+    keys = [
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'TIPO_CONTRATACION',
+        'FECHA_INICIO',
+        'PROVEEDOR_CONTRATISTA'
+    ]
+
+    merged = df_procs.merge(df_sipot, on=keys, how='left', indicator=True)
     merged = merged.rename(columns={
         'FECHA_INICIO_x': 'FECHA_INICIO',
         'CODIGO_EXPEDIENTE_x': 'CODIGO_EXPEDIENTE'

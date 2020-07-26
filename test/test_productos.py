@@ -226,6 +226,8 @@ class TestProductos:
             ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', None, None, 1, None, None, None, 3000, 201000105, '2019/06/01'],
         ], columns=common + sipot_cols + ['PRECIO_TOTAL', 'SIPOT_ID', 'FECHA_INICIO'])
 
+        df_test_sipot.FECHA_INICIO = pd.to_datetime(df_test_sipot.FECHA_INICIO)
+
         df_fallas = pd.DataFrame(data=[
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
