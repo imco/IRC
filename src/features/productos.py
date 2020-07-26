@@ -639,18 +639,17 @@ def ganador_mas_barato(df_procs: DataFrame,
     """
     Revisa si la empresa ganadora fue la propuesta más baja.
     """
-    minimos = (df_parts.groupby('REF_PARTICIPANTES')
+    minimos = (agrupa_participaciones(df_parts)
                .PRECIO_TOTAL.min()
                .reset_index()
                .rename(columns={'PRECIO_TOTAL':'PRECIO_MAS_BAJO'}))
 
-    df = pd.merge(df_parts, minimos, how='left')
-    ganador = df.ESTATUS_DE_PROPUESTA == 'GANADOR'
-    masbara = df.PRECIO_TOTAL == df.PRECIO_MAS_BAJO
-    df['mas_barato'] = (ganador & masbara).astype(int)
+    parts_con_min = da_participaciones_unicas(df_parts, minimos)
+    parts_con_min = parts_con_min.drop('REF_PARTICIPANTES', axis=1)
+    masbara = parts_con_min.PRECIO_TOTAL == parts_con_min.PRECIO_MAS_BAJO
+    parts_con_min['mas_barato'] = (masbara).astype(int)
 
-    df.drop(['ESTATUS_DE_PROPUESTA', 'REF_PARTICIPANTES'], axis=1, inplace=True)
-    return pd.merge(df_procs, df, how='left')
+    return une_participantes_con_procedimientos(df_procs, parts_con_min)
 
 
 def plazos_cortos(df_procs: DataFrame,
