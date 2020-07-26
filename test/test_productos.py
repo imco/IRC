@@ -336,16 +336,16 @@ class TestProductos:
 
     def test_plazos_cortos(self):
         df_test_procs = pd.DataFrame(data=[
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', '2018/01/01', '2018/01/04', 1000],
-            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/03/01', '2018/02/01', '2018/02/28', 2000],
-            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/04/01', '2018/03/01', '2018/03/04', 2000],
-            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C',   '2018/05/01', '2018/04/01', '2018/04/09', 9000],
-            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D',   '2018/06/01', '2018/04/01', '2018/05/30', 5000],
-            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', '2018/06/01', '2018/06/09', 3000],
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', '2018/02/01', '2018/01/01', '2018/01/04', 1200, '001'],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/03/01', '2018/02/01', '2018/02/28', 2000, '001'],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/04/01', '2018/03/01', '2018/03/04', 2000, '001'],
+            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C',   '2018/05/01', '2018/04/01', '2018/04/09', 9000, '001'],
+            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D',   '2018/06/01', '2018/04/01', '2018/05/30', 5000, '001'],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', '2018/07/01', '2018/06/01', '2018/06/09', 3000, '002'],
             # No reportadas en PNT
-            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa F', '2018/08/01', '2018/07/01', '2018/07/04', 3000],
-            ['002-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa G', '2018/08/01', '2018/06/01', '2018/07/30', 3000]
-        ], columns=common + ['FECHA_INICIO', 'PROC_F_PUBLICACION', 'FECHA_APERTURA_PROPOSICIONES', 'IMPORTE_PESOS'])
+            ['002-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa F', '2018/08/01', '2018/07/01', '2018/07/04', 3000, '002'],
+            ['002-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa G', '2018/08/01', '2018/06/01', '2018/07/30', 3000, '002']
+        ], columns=common + ['FECHA_INICIO', 'PROC_F_PUBLICACION', 'FECHA_APERTURA_PROPOSICIONES', 'IMPORTE_PESOS', 'CLAVEUC'])
 
         # Transforma columnas de fechas
         for c in ['FECHA_INICIO', 'PROC_F_PUBLICACION', 'FECHA_APERTURA_PROPOSICIONES']:

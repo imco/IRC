@@ -617,18 +617,35 @@ def plazos_cortos(df_procs: DataFrame,
         'NUMERO_PROCEDIMIENTO',
         'TIPO_PROCEDIMIENTO',
         'TIPO_CONTRATACION',
-        'FECHA_INICIO'
+        'FECHA_INICIO',
+        'CLAVEUC'
     ]
-    # La manera de agrupar las participaciones (encontradas en el SIPOT de la PNT)
-    # es utilizando la columna REF_PARTICIPANTES que hace referencia a un identificador
-    # utilizado para ligar la tabla principal con el detalle de participantes por proceso.
-    participaciones = (df_parts.groupby(keys + ['REF_PARTICIPANTES'])
+
+    # Aquí vamos a contar los concursantes por proceso único:
+    # La manera de agrupar las participaciones (encontradas en el SIPOT de la PNT) es
+    # usando una llave compuesta. No podemos usar REF_PARTICIPANTES porque existen
+    # miles de entradas con esto en 0 ya que fueron procesos sin participantes.
+    participaciones = (df_parts
+                       .groupby(keys)
                        .PROVEEDOR_CONTRATISTA.count()
                        .reset_index()
                        .rename(columns={'PROVEEDOR_CONTRATISTA': 'num_propuestas'}))
 
+    # Una vez que contamos las participaciones por procedimiento de SIPOT
+    # Vamos a conectarla con los ganadores, para así no tener duplicados entre ganadores
+    # y perdedores. De paso renombramos PRECIO_TOTAL para poder ligar con procedimientos.
+    ganadores = df_parts[df_parts.ESTATUS_DE_PROPUESTA == 'GANADOR']
+    participaciones_unicas = (pd.merge(ganadores, participaciones)
+                              .drop('ESTATUS_DE_PROPUESTA', axis=1)
+                              .rename(columns={'PRECIO_TOTAL': 'IMPORTE_PESOS'}))
+
+    # Agregando el PROVEEDOR (el ganador) y el Importe mejora los matches en procedimientos
+    # Dejando solo 1,012 de ~351,000 con uno que otro duplicado.
+    keys = keys + ['PROVEEDOR_CONTRATISTA', 'IMPORTE_PESOS']
+
     # Anexamos num. de participaciones a la tabla resultado
-    res = res.merge(participaciones, on=keys, how='left')
+    res = res.merge(participaciones_unicas, on=keys, how='left')
+
     # Podemos asumir que aunque no esten en la tabla de participantes, al menos tuvieron 1 ganador
     res['num_propuestas'] = res['num_propuestas'].fillna(1)
     res['num_propuestas'] = res['num_propuestas'].astype(int)
