@@ -616,7 +616,22 @@ def une_participantes_con_procedimientos(df_procs: DataFrame,
 
     # Siempre con LEFT JOIN porque la tabla de procedimientos es nuestro
     # punto de referencia siempre.
-    return df_procs.merge(df_parts, on=keys, how='left')
+    parts = df_parts.rename(columns={'PRECIO_TOTAL': 'IMPORTE_PESOS'})
+    return df_procs.merge(parts, on=keys, how='left')
+
+
+def da_participaciones_unicas(df_parts: DataFrame,
+                              gr_parts: DataFrame) -> DataFrame:
+    """
+    Una vez que aplicamos operaciones a una agrupación de participaciones
+    Vamos a conectarla con los ganadores, para así no tener duplicados entre ganadores
+    y perdedores.
+
+    De paso renombramos PRECIO_TOTAL para poder ligar con procedimientos.
+    """
+    ganadores = df_parts[df_parts.ESTATUS_DE_PROPUESTA == 'GANADOR']
+    return (pd.merge(ganadores, gr_parts)
+            .drop('ESTATUS_DE_PROPUESTA', axis=1))
 
 
 def ganador_mas_barato(df_procs: DataFrame,
@@ -666,13 +681,8 @@ def plazos_cortos(df_procs: DataFrame,
                        .rename(columns={'PROVEEDOR_CONTRATISTA': 'num_propuestas'}))
 
     # Una vez que contamos las participaciones por procedimiento de SIPOT
-    # Vamos a conectarla con los ganadores, para así no tener duplicados entre ganadores
-    # y perdedores. De paso renombramos PRECIO_TOTAL para poder ligar con procedimientos.
-    ganadores = df_parts[df_parts.ESTATUS_DE_PROPUESTA == 'GANADOR']
-    participaciones_unicas = (pd.merge(ganadores, participaciones)
-                              .drop('ESTATUS_DE_PROPUESTA', axis=1)
-                              .rename(columns={'PRECIO_TOTAL': 'IMPORTE_PESOS'}))
-
+    # vamos a preparar la base para procedimientos
+    participaciones_unicas = da_participaciones_unicas(df_parts, participaciones)
     # Anexamos num. de participaciones a la tabla resultado
     res = une_participantes_con_procedimientos(res, participaciones_unicas)
 
