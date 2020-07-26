@@ -213,7 +213,7 @@ class TestProductos:
         res = convenios_entre_entes_publicos(df_test_procs, df_test_sipot)
         pd.testing.assert_frame_equal(res, df_expected)
 
-    def test_promedio_datos_faltantes_por_contrato_pnt(self):
+    def test_falta_transparencia_pnt(self):
         sipot_cols = (['LIGA_AUTORIZACION', 'REF_COTIZACIONES', 'LIGA_CONTRATO'] +
                       ['LIGA_CONVOCATORIA', 'LIGA_FALLO', 'LIGA_FINIQUITO'])
 
