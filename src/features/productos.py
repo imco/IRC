@@ -569,6 +569,56 @@ def colusion(df_procs: DataFrame,
     return pd.merge(df_procs, res, how='left')
 
 
+def agrupa_participaciones(df_parts: DataFrame) -> DataFrame:
+    """
+    A pesar de que CODIGO_CONTRATO es único en la tabla de procedimientos,
+    la tabla de participantes no tiene este identificador.
+    Usar sólo NUMERO_PROCEDIMIENTO genera alrededor de 25% de duplicados.
+    Usando una llave compuesta reducimos los duplicados a menos del 1%.
+
+    No podemos usar REF_PARTICIPANTES porque existen
+    miles de entradas con esto en 0 ya que fueron procesos sin participantes.
+
+    Este método sirve para estandarizar la agrupación de participaciones
+    requerida por varios productos que utilizan esta tabla.
+    """
+    return df_parts.groupby([
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'TIPO_CONTRATACION',
+        'FECHA_INICIO',
+        'CLAVEUC'
+    ])
+
+
+def une_participantes_con_procedimientos(df_procs: DataFrame,
+                                         df_parts: DataFrame) -> DataFrame:
+    """
+    Éste método estandariza la manera en la que conectamos tablas
+    de procedimientos y participantes.
+
+    Como vimos en el método agrupa_participaciones, la tabla de participantes
+    no tiene identificador único, por lo que tenemos que formar una llave
+    compuesta.
+    """
+    # Agregando el PROVEEDOR (el ganador en df_parts) y el importe,
+    # mejoramos los matches en procedimientos.
+    # Dejando sólo 1,012 de ~351,000 con uno que otro duplicado.
+    keys = [
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'TIPO_CONTRATACION',
+        'FECHA_INICIO',
+        'CLAVEUC',
+        'PROVEEDOR_CONTRATISTA',
+        'IMPORTE_PESOS'
+    ]
+
+    # Siempre con LEFT JOIN porque la tabla de procedimientos es nuestro
+    # punto de referencia siempre.
+    return df_procs.merge(df_parts, on=keys, how='left')
+
+
 def ganador_mas_barato(df_procs: DataFrame,
                        df_parts: DataFrame) -> DataFrame:
     """
@@ -609,24 +659,8 @@ def plazos_cortos(df_procs: DataFrame,
 
     # 2. Número total de propuestas por proceso.
     # Para esto debemos ligar procedimientos y participaciones
-    # A pesar de que CODIGO_CONTRATO es único en la tabla de procedimientos
-    # La tabla de participantes no tiene este identificador, y usa NUMERO_PROCEDIMIENTO
-    # el cual tiene alrededor de 25% de duplicados en los procedimientos.
-    # Usando una llave compuesta reducimos los duplicados a menos del 1%:
-    keys = [
-        'NUMERO_PROCEDIMIENTO',
-        'TIPO_PROCEDIMIENTO',
-        'TIPO_CONTRATACION',
-        'FECHA_INICIO',
-        'CLAVEUC'
-    ]
-
     # Aquí vamos a contar los concursantes por proceso único:
-    # La manera de agrupar las participaciones (encontradas en el SIPOT de la PNT) es
-    # usando una llave compuesta. No podemos usar REF_PARTICIPANTES porque existen
-    # miles de entradas con esto en 0 ya que fueron procesos sin participantes.
-    participaciones = (df_parts
-                       .groupby(keys)
+    participaciones = (agrupa_participaciones(df_parts)
                        .PROVEEDOR_CONTRATISTA.count()
                        .reset_index()
                        .rename(columns={'PROVEEDOR_CONTRATISTA': 'num_propuestas'}))
@@ -639,12 +673,8 @@ def plazos_cortos(df_procs: DataFrame,
                               .drop('ESTATUS_DE_PROPUESTA', axis=1)
                               .rename(columns={'PRECIO_TOTAL': 'IMPORTE_PESOS'}))
 
-    # Agregando el PROVEEDOR (el ganador) y el Importe mejora los matches en procedimientos
-    # Dejando solo 1,012 de ~351,000 con uno que otro duplicado.
-    keys = keys + ['PROVEEDOR_CONTRATISTA', 'IMPORTE_PESOS']
-
     # Anexamos num. de participaciones a la tabla resultado
-    res = res.merge(participaciones_unicas, on=keys, how='left')
+    res = une_participantes_con_procedimientos(res, participaciones_unicas)
 
     # Podemos asumir que aunque no esten en la tabla de participantes, al menos tuvieron 1 ganador
     res['num_propuestas'] = res['num_propuestas'].fillna(1)
