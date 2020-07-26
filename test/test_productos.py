@@ -190,13 +190,15 @@ class TestProductos:
 
     def test_convenios_entre_entes_publicos(self):
         df_test_sipot = pd.DataFrame(data=[
-            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', 'LEY DE ADQUI Y ARRENDAMIENTOS', 1000],
-            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'LEY DE PETROLEOS', 2000],
-            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'LAASSP', 3000],
-            ['001-LP-0004/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa C', '', 9000],
-            ['001-LP-0005/2018', 'LICITACION PUBLICA', 'SERVICIOS', 'Empresa D', '', 9000],
-            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'Artículo 43 de LOPSRM', 3000],
-        ], columns=common + ['MOTIVOS_ADJUDICACION', 'PRECIO_TOTAL'])
+            ['001-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa A', 'LEY DE ADQUI Y ARRENDAMIENTOS', 1000, '2019/01/01'],
+            ['001-AD-0002/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'LEY DE PETROLEOS',              2000, '2019/02/01'],
+            ['001-AD-0003/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'LAASSP',                        2000, '2019/03/01'],
+            ['001-LP-0004/2018', 'LICITACION PUBLICA',   'SERVICIOS', 'Empresa C', '',                              9000, '2019/04/01'],
+            ['001-LP-0005/2018', 'LICITACION PUBLICA',   'SERVICIOS', 'Empresa D', '',                              9000, '2019/05/01'],
+            ['002-AD-0001/2018', 'ADJUDICACION DIRECTA', 'SERVICIOS', 'Empresa B', 'Artículo 43 de LOPSRM',         3000, '2019/06/01'],
+        ], columns=common + ['MOTIVOS_ADJUDICACION', 'PRECIO_TOTAL', 'FECHA_INICIO'])
+
+        df_test_sipot.FECHA_INICIO = pd.to_datetime(df_test_sipot.FECHA_INICIO)
 
         variables = pd.DataFrame(data=[
             [1, 0],

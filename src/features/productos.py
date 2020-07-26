@@ -14,7 +14,8 @@ import numpy as np
 from utils.helpers import (
     agrupa_participaciones,
     une_participantes_con_procedimientos,
-    da_participaciones_unicas
+    da_participaciones_unicas,
+    une_sipot_con_procedimientos
 )
 
 DataFrame = pd.DataFrame
@@ -346,9 +347,10 @@ def convenios_entre_entes_publicos(df_procs: DataFrame,
     ad_sipot['LAASSP'] = (leyadq | laassp).astype(int)
     ad_sipot['LOPSRM'] = (leyobr | lopsrm).astype(int)
 
+    ad_sipot.drop('MOTIVOS_ADJUDICACION', axis=1, inplace=True)
+
     # Mezclamos con la tabla de procedimientos
-    convenios = ad_sipot[id_cols + ['LAASSP', 'LOPSRM']]
-    return pd.merge(df_procs, convenios, how='left')
+    return une_sipot_con_procedimientos(df_procs, ad_sipot)
 
 
 def falta_transparencia_pnt(df_procs: DataFrame,

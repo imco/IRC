@@ -70,3 +70,30 @@ def da_participaciones_unicas(df_parts: DataFrame,
     ganadores = df_parts[df_parts.ESTATUS_DE_PROPUESTA == 'GANADOR']
     return (pd.merge(ganadores, gr_parts)
             .drop('ESTATUS_DE_PROPUESTA', axis=1))
+
+def une_sipot_con_procedimientos(df_procs: DataFrame,
+                                 df_sipot: DataFrame) -> DataFrame:
+    """
+    Éste método estandariza la manera en la que conectamos tablas
+    de procedimientos y sipot.
+
+    La tabla de sipot es muy parecida a la de participantes, de hecho
+    la segunda deriva de la primera.
+
+    Sin embargo en SIPOT no tenemos CLAVEUC.
+    """
+    # Agregando el PROVEEDOR y el importe, mejoramos los matches en procedimientos.
+    keys = [
+        'NUMERO_PROCEDIMIENTO',
+        'TIPO_PROCEDIMIENTO',
+        'TIPO_CONTRATACION',
+        'FECHA_INICIO',
+        'PROVEEDOR_CONTRATISTA',
+        'IMPORTE_PESOS'
+    ]
+
+    # Siempre con LEFT JOIN porque la tabla de procedimientos es nuestro
+    # punto de referencia siempre.
+    sipot = df_sipot.rename(columns={'PRECIO_TOTAL': 'IMPORTE_PESOS'})
+    return df_procs.merge(sipot, on=keys, how='left')
+
