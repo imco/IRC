@@ -45,6 +45,10 @@ Finalmente, instala el código de este proyecto con:
 $ pip install --editable .
 ```
 
+## Tests
+
+El proyecto incluye un set de pruebas unitarias que se pueden correr con `pytest`.
+
 ### Dependencias de sistema
 - python 3+
 - libsnappy
