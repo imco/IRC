@@ -47,6 +47,12 @@ go get
 go build
 ```
 
+Para confirmar que se instaló y ver las opciones ejecuta:
+
+```bash
+./scraper -h
+```
+
 ## Ejemplo de expediente en JSON
 
 ```json
