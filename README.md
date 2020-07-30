@@ -37,6 +37,9 @@ o para versiones más recientes de miniconda con:
 ```
 $ conda activate compranet
 ```
+
+Si el `environment` no funciona basta con crear un ambiente con `conda create --name compranet` y cargarlo con `conda activate compranet`.
+
 Finalmente, instala el código de este proyecto con:
 ```
 $ pip install --editable .
