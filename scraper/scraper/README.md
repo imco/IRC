@@ -30,6 +30,8 @@ cargando lista de ids de archivo
 
 ## Uso en modo desarrollo.
 
+Primero [instala el lenguaje Go](https://golang.org/doc/install).
+
 Clona el repo dentro de tu `GOHOME` en la carpeta:
 
 ```bash
