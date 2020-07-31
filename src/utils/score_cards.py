@@ -22,7 +22,10 @@ def chunks(l: List[Any], n: int):
 def escalar_features(df: DataFrame,
                      cols,
                      rango: Tuple[int, int]) -> DataFrame:
-    """Se escalan los features de 0 a 100"""
+    """
+    Se escalan los features de 0 a 100.
+    Tiene side effects sobre el DataFrame pasado a la función.
+    """
     for col in cols:
         # Es importante reemplazar INF por NAN para que sean ignorados
         x = df[col].replace([np.inf, -np.inf], np.nan).values
