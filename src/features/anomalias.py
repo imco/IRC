@@ -2,6 +2,7 @@
 
 # Created by Raul Peralta-Lozada (11/10/17)
 import pandas as pd
+import numpy as np
 from typing import List, Tuple
 from features.productos import contratos_fraccionados
 
@@ -131,7 +132,6 @@ def pc_contratos_con_convenio(df: DataFrame, **kwargs) -> DataFrame:
         as_index=False).CODIGO_CONTRATO.sum()
     contratos_total = contratos_total.pivot(index='CLAVEUC',
         columns='CONVENIO_MODIFICATORIO', values='CODIGO_CONTRATO')
-    contratos_total = contratos_total.fillna(0)
 
     num_contratos = contratos_total.sum(axis=1)
     # TODO: cambiar toda esta parte, el nombre final es otro
@@ -147,7 +147,7 @@ def pc_contratos_con_convenio(df: DataFrame, **kwargs) -> DataFrame:
 
     # 2013 parece que no trae convenios así que llenamos una columna con ceros.
     if 'pc_contratos_convenio_si' not in contratos_total.columns:
-        contratos_total['pc_contratos_convenio_si'] = 0
+        contratos_total['pc_contratos_convenio_si'] = np.nan
 
     contratos_total.columns.name = ''
     contratos_total = contratos_total.reset_index()
@@ -401,12 +401,11 @@ def pc_estratificacion_mal_reportada(df: DataFrame,
                                   columns='estratificacion_igual',
                                   values='PROVEEDOR_CONTRATISTA')
     df_feature = (df_feature * 100).divide(df_feature.sum(axis=1), axis=0)
-    df_feature = df_feature.fillna(0)
     if False not in df_feature.columns:
         # O todos reportaron su valor correctamente
         # O talvez no reportaron Estratificación,
         # como es el caso de 2018-2019.
-        df_feature[False] = 0
+        df_feature[False] = np.nan
 
     col_feature = 'pc_estratificacion_mal_reportada'
     df_feature = df_feature.rename(columns={False: col_feature})
