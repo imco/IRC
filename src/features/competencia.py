@@ -367,7 +367,6 @@ def tendencia_adjudicacion_directa(df: DataFrame, **kwargs) -> DataFrame:
           .pivot_table(index=['CLAVEUC', 'Year'],
                        columns=['adjudicacion_directa'],
                        values='NUMERO_PROCEDIMIENTO')
-          .fillna(0)
           .reset_index()
           .rename(columns={True: 'num_adj_si',
                            False: 'num_adj_no'}))
@@ -479,16 +478,15 @@ def pc_licitaciones_con_un_participante(df: DataFrame,
             .rename(columns={'NUMERO_PROCEDIMIENTO': 'numero_procedimientos'})
             .pivot(index='CLAVEUC',  # TODO: Esta parte no me gusta
                    columns='numero_proveedores',
-                   values='numero_procedimientos')
-            .fillna(0))
+                   values='numero_procedimientos'))
     df = (df * 100).divide(df.sum(axis=1), axis='index')
     df = df.rename(columns={1: col_name})
     if col_name not in df.columns:
-        df = df.assign(pc_licitaciones_con_un_participante=0)
+        df = df.assign(pc_licitaciones_con_un_participante=np.nan)
     df = df.reset_index()
     # left join
     df_feature = pd.merge(df_feature, df.loc[:, ['CLAVEUC', col_name]],
-                          on='CLAVEUC', how='left').fillna(0)
+                          on='CLAVEUC', how='left')
     return df_feature
 
 
