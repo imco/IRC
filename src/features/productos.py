@@ -21,12 +21,12 @@ from utils.helpers import (
 
 DataFrame = pd.DataFrame
 
-# Columnas para cruzar Compranet con SIPOT (PNT)
-id_cols = [
+# Índice único en df_participantes
+parts_index_cols = [
     'NUMERO_PROCEDIMIENTO',
     'TIPO_PROCEDIMIENTO',
     'TIPO_CONTRATACION',
-    'PROVEEDOR_CONTRATISTA'
+    'CLAVEUC'
 ]
 
 
@@ -466,19 +466,20 @@ def colusion(df_procs: DataFrame,
     """
 
     # Columnas para agrupar participaciones
-    p_cols = [c for c in id_cols if c != 'PROVEEDOR_CONTRATISTA']
+    p_cols = parts_index_cols
+    tuple_cols = parts_index_cols + ['REF_PARTICIPANTES']
 
     # Creamos filas por cada instancia de ganador vs perdedor por procedimiento
     # i.e. si tenemos un ganador y 2 perdedores, entonces tendremos 2 filas
     W = df_parts_lic[df_parts_lic.ESTATUS_DE_PROPUESTA == 'GANADOR']
     L = df_parts_lic[df_parts_lic.ESTATUS_DE_PROPUESTA == 'PERDEDOR']
-    procs_con_tuplas = (pd.merge(W, L, on=p_cols, how='left')
+    procs_con_tuplas = (pd.merge(W, L, on=tuple_cols, how='left')
                         .rename(columns={
                             'PROVEEDOR_CONTRATISTA_x': 'GANADOR',
                             'PROVEEDOR_CONTRATISTA_y': 'PERDEDOR',
                             'REF_PARTICIPANTES_x': 'REF_PARTICIPANTES'
                         })
-                        .loc[:, p_cols + ['REF_PARTICIPANTES', 'GANADOR', 'PERDEDOR']])
+                        .loc[:, tuple_cols + ['GANADOR', 'PERDEDOR']])
 
     # Cuenta las ocurrencias de cada tupla encontrada en cada proceso
     parts_por_tupla = (pd.crosstab(procs_con_tuplas['GANADOR'], procs_con_tuplas['PERDEDOR'])
@@ -570,6 +571,7 @@ def colusion(df_procs: DataFrame,
                                                  how='left')
                            .drop('PROVEEDOR_CONTRATISTA', axis=1)
                            .rename(columns={'Fantasma': 'fantasma_perdedor'}))
+
     tuplas_de_jaccard.fantasma_ganador = tuplas_de_jaccard.fantasma_ganador.notna().astype(int)
     tuplas_de_jaccard.fantasma_perdedor = tuplas_de_jaccard.fantasma_perdedor.notna().astype(int)
     tuplas_de_jaccard['propuestas_artificiales'] = (tuplas_de_jaccard.fantasma_ganador +
