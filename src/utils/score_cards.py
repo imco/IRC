@@ -29,10 +29,13 @@ def escalar_features(df: DataFrame,
         data_min = np.nanmin(x)
         data_max = np.nanmax(x)
         data_range = data_max - data_min
-        scaled_value = (x - data_min) / data_range
-        scaled_value = scaled_value * 100
-        df.loc[:, col] = pd.Series(data=scaled_value.flatten(),
-                                   index=df.index)
+        # Tenemos que evitar escalar features con solo ceros
+        # Porque podríamos generar NaN
+        if data_range > 0:
+            scaled_value = (x - data_min) / data_range
+            scaled_value = scaled_value * 100
+            df.loc[:, col] = pd.Series(data=scaled_value.flatten(),
+                                       index=df.index)
     return df
 
 
