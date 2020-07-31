@@ -55,7 +55,6 @@ def monto_con_rfc_fantasma(df_procs: DataFrame,
                           on='CLAVEUC', how='left')
     df_feature = pd.merge(df_feature, monto_uc_contratos,
                           on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     df_feature = df_feature.loc[:, ['CLAVEUC', 'monto_con_rfc_fantasma']]
     return df_feature
 
@@ -105,7 +104,6 @@ def monto_con_sancionados(df_procs: DataFrame,
                           on='CLAVEUC', how='left')
     df_feature = pd.merge(
         df_feature, monto_uc_contratos, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     df_feature = df_feature.loc[:, ['CLAVEUC', 'monto_con_sancionados']]
     return df_feature
 
@@ -192,7 +190,6 @@ def pc_inconsistencias_convenios_pnt_compranet(df_scraper: DataFrame,
               .pivot(index='CLAVEUC',
                      columns='inconsistente',
                      values='LIGA_CONVENIO')
-              .fillna(0)
               .rename(columns={True: 'num_inconsistente'}))
 
     feature_col = 'pc_inconsistencias_convenios_pnt_compranet'
@@ -203,8 +200,7 @@ def pc_inconsistencias_convenios_pnt_compranet(df_scraper: DataFrame,
                                      columns=[feature_col])
 
     df_feature = (pd.merge(df_claves, df_inconsistentes, on='CLAVEUC', how='left')
-                  .loc[:, ['CLAVEUC', feature_col]]
-                  .fillna(0))
+                  .loc[:, ['CLAVEUC', feature_col]])
 
     return df_feature
 
@@ -238,7 +234,7 @@ def pc_licitaciones_nacionales_menor_15_dias(df: DataFrame,
     delta_dias = (
         df.FECHA_APERTURA_PROPOSICIONES - df.PROC_F_PUBLICACION
     ).dt.days
-    df = df.assign(delta_dias=delta_dias.fillna(0))
+    df = df.assign(delta_dias=delta_dias)
     df = df.assign(licitaciones_menor_15=(df.delta_dias < 15))
     df = (df.groupby(['CLAVEUC', 'licitaciones_menor_15'])
             .NUMERO_PROCEDIMIENTO.nunique()
@@ -248,12 +244,12 @@ def pc_licitaciones_nacionales_menor_15_dias(df: DataFrame,
                    values='NUMERO_PROCEDIMIENTO')
             .rename(columns={True: 'pc_licitaciones_menor_15'}))
     valor_pc = (df.pc_licitaciones_menor_15 * 100).divide(df.sum(axis=1))
-    df = (df.assign(pc_licitaciones_menor_15=valor_pc.fillna(0))
+    df = (df.assign(pc_licitaciones_menor_15=valor_pc)
             .reset_index()
             .loc[:, ['CLAVEUC', 'pc_licitaciones_menor_15']])
     # left join
     df_feature = pd.merge(df_feature, df, on='CLAVEUC', how='left')
-    feature = df_feature.pc_licitaciones_menor_15.fillna(0)
+    feature = df_feature.pc_licitaciones_menor_15
     df_feature = df_feature.assign(
         pc_licitaciones_nacionales_menor_15_dias=feature
     )
@@ -291,7 +287,7 @@ def pc_licitaciones_internacionales_menor_20_dias(df: DataFrame,
     delta_dias = (
         df.FECHA_APERTURA_PROPOSICIONES - df.PROC_F_PUBLICACION
     ).dt.days
-    df = df.assign(delta_dias=delta_dias.fillna(0))
+    df = df.assign(delta_dias=delta_dias)
     df = df.assign(licitaciones_menor_20=(df.delta_dias < 20))
     df = (df.groupby(['CLAVEUC', 'licitaciones_menor_20'])
             .NUMERO_PROCEDIMIENTO.nunique()
@@ -305,12 +301,12 @@ def pc_licitaciones_internacionales_menor_20_dias(df: DataFrame,
         df['pc_licitaciones_menor_20'] = 0
 
     valor_pc = (df.pc_licitaciones_menor_20 * 100).divide(df.sum(axis=1))
-    df = (df.assign(pc_licitaciones_menor_20=valor_pc.fillna(0))
+    df = (df.assign(pc_licitaciones_menor_20=valor_pc)
             .reset_index()
             .loc[:, ['CLAVEUC', 'pc_licitaciones_menor_20']])
     # left join
     df_feature = pd.merge(df_feature, df, on='CLAVEUC', how='left')
-    feature = df_feature.pc_licitaciones_menor_20.fillna(0)
+    feature = df_feature.pc_licitaciones_menor_20
     df_feature = df_feature.assign(
         pc_licitaciones_internacionales_menor_20_dias=feature
     )
@@ -349,7 +345,7 @@ def pc_licitaciones_internacionales_menor_40_dias(df: DataFrame,
     delta_dias = (
         df.FECHA_APERTURA_PROPOSICIONES - df.PROC_F_PUBLICACION
     ).dt.days
-    df = df.assign(delta_dias=delta_dias.fillna(0))
+    df = df.assign(delta_dias=delta_dias)
     df = df.assign(licitaciones_menor_40=(df.delta_dias < 40))
     df = (df.groupby(['CLAVEUC', 'licitaciones_menor_40'])
             .NUMERO_PROCEDIMIENTO.nunique()
@@ -363,12 +359,12 @@ def pc_licitaciones_internacionales_menor_40_dias(df: DataFrame,
         df['pc_licitaciones_menor_40'] = 0
 
     valor_pc = (df.pc_licitaciones_menor_40 * 100).divide(df.sum(axis=1))
-    df = (df.assign(pc_licitaciones_menor_40=valor_pc.fillna(0))
+    df = (df.assign(pc_licitaciones_menor_40=valor_pc)
             .reset_index()
             .loc[:, ['CLAVEUC', 'pc_licitaciones_menor_40']])
     # left join
     df_feature = pd.merge(df_feature, df, on='CLAVEUC', how='left')
-    feature = df_feature.pc_licitaciones_menor_40.fillna(0)
+    feature = df_feature.pc_licitaciones_menor_40
     df_feature = df_feature.assign(
         pc_licitaciones_internacionales_menor_40_dias=feature
     )
@@ -545,12 +541,11 @@ def pc_invitaciones_excedieron_monto(df: DataFrame,
                                    columns=['es_mayor_al_max'],
                                    values='NUMERO_PROCEDIMIENTO')
                       .rename(columns={True: 'num_excedidas_si',
-                                       False: 'num_excedidas_no'})
-                      .fillna(0))
+                                       False: 'num_excedidas_no'}))
 
     # Parece que en SERVICIOS 2019 no se encontró esta anomalía
     if 'num_excedidas_si' not in monto_por_proc.columns:
-        monto_por_proc['num_excedidas_si'] = 0
+        monto_por_proc['num_excedidas_si'] = np.nan
 
     pc_inv3_excedidas = monto_por_proc.num_excedidas_si.divide(monto_por_proc.sum(axis=1))
     monto_por_proc = (monto_por_proc.assign(pc_inv3_excedidas=pc_inv3_excedidas * 100)
@@ -558,14 +553,13 @@ def pc_invitaciones_excedieron_monto(df: DataFrame,
                       .pivot(index='CLAVEUC',
                              columns='Año',
                              values='pc_inv3_excedidas')
-                      .fillna(0)
                       .assign(pc_inv3_excedidas_prom=lambda data: data.mean(axis=1))
                       .drop(años_validos, axis=1)
                       .reset_index())
     # left join
     df_feature = pd.merge(df_claves, monto_por_proc,
                           on='CLAVEUC', how='left')
-    feature = df_feature.pc_inv3_excedidas_prom.fillna(0)
+    feature = df_feature.pc_inv3_excedidas_prom
     df_feature = df_feature.assign(
         pc_invitaciones_excedieron_monto=feature
     )
@@ -594,7 +588,7 @@ def promedio_convenios_por_proc(df: DataFrame,
     df_feature = df_feature.rename(
         columns={'numero_convenios': 'promedio_convenios'})
     df_feature = df_feature.assign(
-        promedio_convenios_por_proc=df_feature.promedio_convenios.fillna(0))
+        promedio_convenios_por_proc=df_feature.promedio_convenios)
     df_feature = df_feature.loc[
                  :, ['CLAVEUC', 'promedio_convenios_por_proc']]
     return df_feature
@@ -623,7 +617,6 @@ def pc_procs_sin_convocatoria(df: DataFrame,
                              as_index=False).CODIGO_EXPEDIENTE.count()
                     .pivot(index='CLAVEUC', columns='archivo_convocatoria',
                            values='CODIGO_EXPEDIENTE')
-                    .fillna(0)
                     .rename(columns={0: 'pc_procs_sin_convocatoria'}))
     columnas = list(df_feature.columns.values)
     if 'pc_procs_sin_convocatoria' not in columnas:
@@ -634,7 +627,6 @@ def pc_procs_sin_convocatoria(df: DataFrame,
                             .loc[:, ['CLAVEUC', 'pc_procs_sin_convocatoria']])
     df_feature.columns.name = ''
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     return df_feature
 
 
@@ -662,7 +654,6 @@ def procs_con_incumplimiento_de_exclusividad_mipyme(df_procs: DataFrame,
     df_feature = df_feature.pivot(index='CLAVEUC',
                                   columns='incumplimiento',
                                   values='CODIGO_EXPEDIENTE')
-    df_feature.fillna(0, inplace=True)
 
     col_feature = 'procs_con_incumplimiento_de_exclusividad_mipyme'
     df_feature = df_feature.rename(columns={True: col_feature})
@@ -700,15 +691,13 @@ def pc_adj_directas_excedieron_monto_fraccionado(df: DataFrame,
                   .pivot_table(index=['CLAVEUC'],
                                columns=['fraccionado'],
                                values='NUMERO_PROCEDIMIENTO')
-                  .rename(columns={True: 'num_excedidas_si', False: 'num_excedidas_no'})
-                  .fillna(0))
+                  .rename(columns={True: 'num_excedidas_si', False: 'num_excedidas_no'}))
 
     pc_fraccionados = uc_cuenta.num_excedidas_si.divide(uc_cuenta.sum(axis=1))
     df_fraccionados = pd.DataFrame(data=pc_fraccionados, columns=['pc_fraccionados'])
 
     df_claves = pd.DataFrame(data=df.CLAVEUC.unique(), columns=['CLAVEUC'])
     df_feature = pd.merge(df_claves, df_fraccionados, on='CLAVEUC', how='left')
-    df_feature.pc_fraccionados = df_feature.pc_fraccionados.fillna(0)
 
     col_name = 'pc_adj_directas_excedieron_monto_fraccionado'
     df_feature = df_feature.rename(columns={'pc_fraccionados': col_name})
