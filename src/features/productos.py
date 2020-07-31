@@ -528,7 +528,7 @@ def colusion(df_procs: DataFrame,
     tuplas_de_jaccard['jaccard'] = (tuplas_de_jaccard.num_participaciones_en_conjunto.divide(
         tuplas_de_jaccard.participaciones_totales_ganador +
         tuplas_de_jaccard.participaciones_totales_perdedor -
-        tuplas_de_jaccard.num_participaciones_en_conjunto)) * 100
+        tuplas_de_jaccard.num_participaciones_en_conjunto))
 
     """
     4. Participación conjunta (colusión)
