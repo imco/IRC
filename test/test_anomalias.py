@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from features.anomalias import (
@@ -59,7 +60,7 @@ class TestAnomalias:
         res = procs_con_incumplimiento_de_exclusividad_mipyme(df_test_procs, df_test_scrap)
 
         assert(res.iloc[0].procs_con_incumplimiento_de_exclusividad_mipyme == 2)
-        assert(res.iloc[1].procs_con_incumplimiento_de_exclusividad_mipyme == 0)
+        assert np.isnan(res.iloc[1].procs_con_incumplimiento_de_exclusividad_mipyme)
 
     def test_pc_adj_directas_excedieron_monto(self):
         df_test_procs = pd.DataFrame(data=[

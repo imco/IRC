@@ -255,7 +255,8 @@ class TestProductos:
             'inconsistencias_publicacion_pnt_compranet'
         ])
 
-        df_expected = pd.concat([df_test_procs, df_fallas], axis=1)
+        expected_procs = df_test_procs.iloc[:, :4].drop('TIPO_CONTRATACION', axis=1)
+        df_expected = pd.concat([expected_procs, df_fallas], axis=1)
 
         res = falta_transparencia_pnt(df_test_procs, df_test_sipot)
         pd.testing.assert_frame_equal(res, df_expected)
@@ -267,7 +268,7 @@ class TestProductos:
             'Publicación página SAT definitivos': ['25/05/2018']
         })
 
-        _jaccard = lambda a, b, c: c / (a + b - c) * 100
+        _jaccard = lambda a, b, c: c / (a + b - c)
         _colusion = lambda j, N: (sum(j) / (N - 1)) * 100
 
         # Sólo hubo 3 LP con más de un licitante
@@ -278,7 +279,7 @@ class TestProductos:
             [],
             # La empresa ganadora D aparece 2 veces en la base
             # Ganándole a B y C
-            [50, 2, _colusion([_jaccard(2, 3, 1) + _jaccard(2, 3, 1)], 3),  2, 2, 1],
+            [0.50, 2, _colusion([_jaccard(2, 3, 1) + _jaccard(2, 3, 1)], 3),  2, 2, 1],
             # Otra Adjudicación ignorada
             [],
             # Dos procesos que no estan en la PNT
@@ -286,8 +287,8 @@ class TestProductos:
             [],
             # La empresa ganadora C aparece 3 veces en la base
             # y le ha ganado a B dos veces y perdido contra D una
-            [50, 1, _colusion([_jaccard(3, 3, 2)], 2),                      3, 2, None],
-            [75, 2, _colusion([_jaccard(3, 3, 2) + _jaccard(3, 2, 1)], 3),  3, 3, 1]
+            [0.50, 1, _colusion([_jaccard(3, 3, 2)], 2),                      3, 2, None],
+            [0.75, 2, _colusion([_jaccard(3, 3, 2) + _jaccard(3, 2, 1)], 3),  3, 3, 1]
         ], columns=[
             'suma_jaccard',
             'perdedores_por_proceso',
