@@ -143,7 +143,6 @@ def pc_procs_sin_contrato(df: DataFrame, **kwargs) -> DataFrame:
     df_feature.columns.name = ''
     df_feature = pd.merge(df_claves, df_feature,
                           on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     return df_feature
 
 
@@ -184,7 +183,6 @@ def pc_procs_sin_fallo(df: DataFrame,
                             .loc[:, ['CLAVEUC', col_feature]])
     df_feature.columns.name = ''
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     return df_feature
 
 
@@ -225,7 +223,6 @@ def pc_procs_sin_apertura(df: DataFrame,
                             .loc[:, ['CLAVEUC', col_feature]])
     df_feature.columns.name = ''
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     return df_feature
 
 
@@ -375,7 +372,6 @@ def pc_adjudicaciones_incompletas(df: DataFrame,
     df_feature = (df_feature.reset_index()
                             .loc[:, ['CLAVEUC', 'pc_adjudicaciones_incompletas']])
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     return df_feature
 
 
@@ -415,7 +411,6 @@ def pc_procs_sin_junta_aclaracion(df: DataFrame,
                             .loc[:, ['CLAVEUC', col_feature]])
     df_feature.columns.name = ''
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     return df_feature
 
 
@@ -460,7 +455,6 @@ def pc_invitaciones_incompletas(df: DataFrame, **kwargs) -> DataFrame:
     df_feature = (df_feature.reset_index()
                             .loc[:, ['CLAVEUC', 'pc_invitaciones_incompletas']])
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     return df_feature
 
 
@@ -501,7 +495,6 @@ def pc_licitaciones_incompletas(df: DataFrame,
     df_feature = (df_feature.reset_index()
                             .loc[:, ['CLAVEUC', 'pc_licitaciones_incompletas']])
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
     return df_feature
 
 
@@ -705,7 +698,6 @@ def pc_procs_con_testigo_social(df: DataFrame, **kwargs) -> DataFrame:
                   .loc[:, ['CLAVEUC', col_feature]])
     df_feature.columns.name = ''
     df_feature = pd.merge(df_claves, df_feature, on='CLAVEUC', how='left')
-    df_feature = df_feature.fillna(0)
 
     return df_feature
 
