@@ -255,7 +255,8 @@ class TestProductos:
             'inconsistencias_publicacion_pnt_compranet'
         ])
 
-        df_expected = pd.concat([df_test_procs, df_fallas], axis=1)
+        expected_procs = df_test_procs.iloc[:, :4].drop('TIPO_CONTRATACION', axis=1)
+        df_expected = pd.concat([expected_procs, df_fallas], axis=1)
 
         res = falta_transparencia_pnt(df_test_procs, df_test_sipot)
         pd.testing.assert_frame_equal(res, df_expected)
