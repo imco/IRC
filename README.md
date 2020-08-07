@@ -25,25 +25,26 @@ Esta serie de beneficios permite expandir el alcance del proyecto a prácticamen
 
 ## Instalación
 El análisis de este proyecto se realizó con python, para ejecutar el código de este repositorio se recomienda instalar [miniconda](https://conda.io/miniconda.html).
-Una vez instalado puedes correr el siguiente comando (en este mismo directorio) para que se instalen todas las dependencias:
+
+Una vez instalado, es recomendable crear un ambiente nuevo de python 3.6.
+
 ```
-$ conda env create -f environment.yml
+$ conda create -n compranet python=3.6
 ```
-Este comando creará un entorno virtual con los paquete necesarios, lo puedes activar con la siguiente línea:
-```
-$ source activate compranet
-```
-o para versiones más recientes de miniconda con:
+
+Ahora es necesario activar el ambiente:
+
 ```
 $ conda activate compranet
 ```
 
-Si el `environment` no funciona basta con crear un ambiente con `conda create --name compranet` y cargarlo con `conda activate compranet`.
+Para finalmente instalar las dependencias (la bandera --editable te permite hacer cambios al vuelo, p.ej. editar features):
 
-Finalmente, instala el código de este proyecto con:
 ```
 $ pip install --editable .
 ```
+
+Prueba tu instalación corriendo las pruebas unitarias (ver siguiente sección Tests) y ejecutando Jupyter Notebook con el comando `jupyter notebook`. Este último comando abrirá en el navegador el ambiente Jupyter donde podrás encontrar las notebooks que tienen el proceso interactivo de ingeniería de datos y generación de indicadores (ver sección v2.0).
 
 ## Tests
 
