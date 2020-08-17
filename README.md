@@ -44,6 +44,8 @@ Para finalmente instalar las dependencias (la bandera --editable te permite hace
 $ pip install --editable .
 ```
 
+Las dependencias que instalará el script están enlistadas en [setup.py](https://github.com/imco/IRC/blob/master/setup.py#L9); incluyen: dask para cómputo paralelizable, numpy y pandas para manejo de dataframes, matplotlib para gráficas, entre otros.
+
 Prueba tu instalación corriendo las pruebas unitarias (ver siguiente sección Tests) y ejecutando Jupyter Notebook con el comando `jupyter notebook`. Este último comando abrirá en el navegador el ambiente Jupyter donde podrás encontrar las notebooks que tienen el proceso interactivo de ingeniería de datos y generación de indicadores (ver sección v2.0).
 
 ## Tests
